@@ -2,11 +2,13 @@
 
 **Gerado em:** 07/10/2026 · **Apresentação:** 05/11/2026 (quinta-feira) · **Dias disponíveis:** 29
 
-## Atualização de 08/10 — Semana 1 adiantada
+## Atualização de 08/10 — Semana 1 adiantada e já mesclada na main
 
-Boa parte da Semana 1 (e um adiantamento da Semana 2) já foi implementada em [PR #1](https://github.com/joaobatis1a/confluencia/pull/1): mapa Leaflet, captura de coordenadas, Feed completo (mock), módulo Projetos completo (mock), autenticação via Supabase (código pronto) e as 4 migrations SQL do banco (`posts`, `profiles`, `projetos`, `votos`, com RLS). Cada guia individual em PDF tem uma seção "Status atual" explicando o que já está pronto e o próximo passo de cada um.
+Boa parte da Semana 1 (e um adiantamento da Semana 2) já foi implementada, revisada e está **mesclada na branch `main`** (era o [PR #1](https://github.com/joaobatis1a/confluencia/pull/1), já fechado) e **no ar** em [confluencia-liart.vercel.app](https://confluencia-liart.vercel.app): mapa Leaflet, captura de coordenadas, Feed completo (mock), módulo Projetos completo (mock), autenticação via Supabase (código pronto), as 4 migrations SQL do banco (`posts`, `profiles`, `projetos`, `votos`, com RLS), animações de interface, README, LICENSE (MIT, nos três nomes) e deploy conectado ao GitHub. Cada guia individual em PDF tem uma seção "Status atual" explicando o que já está pronto e o próximo passo de cada um.
 
 **Bloqueio real agora:** ainda não existe um projeto Supabase de verdade — isso é 100% do Guilherme. Até ele criar o projeto e aplicar as migrations (`supabase/README.md`), João e Ana seguem trabalhando com dados mock, o que já é suficiente para avançar o resto da Semana 2.
+
+**Importante para todos:** as branches iniciais (`joao/feed-geolocalizacao`, `ana/projetos-frontend`, `guilherme/backend-core`) ficaram desatualizadas depois do merge. Antes da próxima tarefa, rode `git checkout main && git pull origin main` e crie sua branch a partir daí.
 
 ## Por que o cronograma mudou
 
