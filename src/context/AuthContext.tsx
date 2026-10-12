@@ -9,7 +9,10 @@ interface AuthContextValue {
   /** Linha da tabela `profiles` do usuário logado — usada para checar institucional_verificado (ex: guardar /painel). null enquanto carrega ou se deslogado. */
   profile: Profile | null
   loading: boolean
-  signUp: (email: string, password: string, nome: string) => Promise<{ error: string | null }>
+  /** `confirmed` indica se já voltou logado (confirmação de e-mail desativada no projeto)
+   *  ou se precisa confirmar o e-mail antes de entrar — a tela de cadastro usa isso pra
+   *  decidir pra onde mandar a pessoa depois. */
+  signUp: (email: string, password: string, nome: string) => Promise<{ error: string | null; confirmed: boolean }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
@@ -72,12 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user.id])
 
   async function signUp(email: string, password: string, nome: string) {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { nome } },
     })
-    return { error: error?.message ?? null }
+    // Com a confirmação de e-mail desativada no projeto, o Supabase já retorna
+    // uma sessão válida aqui — a pessoa sai cadastrada e logada. onAuthStateChange
+    // (acima) atualiza o contexto sozinho; só avisamos a tela se já pode seguir.
+    return { error: error?.message ?? null, confirmed: data.session !== null }
   }
 
   async function signIn(email: string, password: string) {

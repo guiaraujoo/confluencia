@@ -1,17 +1,43 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { MOCK_POSTS } from '../mock'
+import { supabase } from '../../../lib/supabase'
 import MapView from '../../../components/MapView'
 import { Card } from '../../../components/ui'
 import CategoryBadge from '../../../components/CategoryBadge'
 import RepercussaoBar from '../../../components/RepercussaoBar'
 import { formatRelativo } from '../../../lib/repercussao'
+import type { Post } from '../../../types/database'
 
 // Tarefa 4.1 do João (Semana 4): camada de simulação visual — versão ilustrativa,
 // ainda estática por enquanto (igual combinado no Escopo Geral: não é preditivo).
 export default function PostDetailPage() {
   const { id } = useParams()
-  const post = MOCK_POSTS.find((p) => p.id === id)
+  const [post, setPost] = useState<Post | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    supabase
+      .from('posts')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) {
+          setPost(data)
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (loading) {
+    return <div className="max-w-2xl mx-auto px-4 py-8 text-sm text-grafite-500">Carregando...</div>
+  }
 
   if (!post) {
     return (

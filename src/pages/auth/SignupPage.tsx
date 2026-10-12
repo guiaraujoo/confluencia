@@ -17,10 +17,16 @@ export default function SignupPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { error } = await signUp(email, password, nome)
+    const { error, confirmed } = await signUp(email, password, nome)
     setLoading(false)
     if (error) {
       setError(error)
+      return
+    }
+    if (confirmed) {
+      // Já voltou logado (confirmação de e-mail desativada no projeto) — mandar
+      // pra /entrar aqui seria pedir pra pessoa logar de novo sem necessidade.
+      navigate('/feed')
       return
     }
     setSuccess(true)

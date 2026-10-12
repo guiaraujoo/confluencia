@@ -1,14 +1,39 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../context/AuthContext'
-import { MOCK_POSTS } from '../../features/feed/mock'
+import { supabase } from '../../lib/supabase'
 import { Card } from '../../components/ui'
 import CategoryBadge from '../../components/CategoryBadge'
 import { formatRelativo } from '../../lib/repercussao'
-
+import type { Post } from '../../types/database'
 
 export default function PerfilPage() {
   const { user, profile, loading } = useAuth()
+  const [meusPosts, setMeusPosts] = useState<Post[]>([])
+  const [postsLoading, setPostsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) {
+      setPostsLoading(false)
+      return
+    }
+    let cancelled = false
+    supabase
+      .from('posts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setMeusPosts(data ?? [])
+          setPostsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   if (loading) {
     return <div className="max-w-md mx-auto px-4 py-16 text-sm text-grafite-500">Carregando...</div>
@@ -32,7 +57,6 @@ export default function PerfilPage() {
 
   const nome = profile?.nome || user.email?.split('@')[0] || 'Você'
   const institucional = profile?.institucional_verificado ?? false
-  const meusPosts = MOCK_POSTS.filter((p) => p.user_id === user.id)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
@@ -79,7 +103,9 @@ export default function PerfilPage() {
         <h2 className="font-heading text-sm font-bold text-grafite-900 mb-3">
           Meus relatos {meusPosts.length > 0 && <span className="text-grafite-500">({meusPosts.length})</span>}
         </h2>
-        {meusPosts.length === 0 ? (
+        {postsLoading ? (
+          <p className="text-sm text-grafite-500">Carregando...</p>
+        ) : meusPosts.length === 0 ? (
           <div className="text-sm text-grafite-500">
             Você ainda não relatou nenhum problema.{' '}
             <Link to="/feed/novo" className="text-amarelo-700 font-semibold hover:underline">

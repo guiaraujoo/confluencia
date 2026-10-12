@@ -1,39 +1,55 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { MOCK_POSTS } from '../mock'
+import { supabase } from '../../../lib/supabase'
 import PostCard from '../components/PostCard'
 import MapView from '../../../components/MapView'
 import Pills from '../../../components/Pills'
 import { Select } from '../../../components/ui'
-import { CATEGORIAS, type Categoria } from '../../../types/database'
+import { CATEGORIAS, type Categoria, type Post } from '../../../types/database'
 
 // Tarefa 2.5 do João: "listagem real + filtro por categoria/bairro".
-// --- PRÓXIMO PASSO (fora do escopo desta entrega, pendente de Supabase real) ---
-// Troque MOCK_POSTS por uma query real assim que a tabela `posts` existir:
-//
-//   const { data, error } = await supabase
-//     .from('posts')
-//     .select('*')
-//     .order('created_at', { ascending: false })
-//
-// O resto da tela (filtros, cards, mapa) já funciona igual com dados reais,
-// porque o formato de `Post` é o mesmo (ver src/types/database.ts).
+// Agora lê de verdade da tabela `posts` (Guilherme já tem o projeto Supabase
+// no ar) — se a query falhar (ex: .env.local sem as chaves), mostra o erro em
+// vez de mascarar com dados falsos.
 export default function FeedPage() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [categoria, setCategoria] = useState<Categoria | 'todas'>('todas')
   const [bairro, setBairro] = useState('')
 
-  const bairros = useMemo(
-    () => Array.from(new Set(MOCK_POSTS.map((p) => p.bairro))).sort(),
-    [],
-  )
+  useEffect(() => {
+    let cancelled = false
+    async function loadPosts() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (cancelled) return
+      if (error) {
+        setError(error.message)
+      } else {
+        setError(null)
+        setPosts(data ?? [])
+      }
+      setLoading(false)
+    }
+    loadPosts()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const bairros = useMemo(() => Array.from(new Set(posts.map((p) => p.bairro))).sort(), [posts])
 
   const filtered = useMemo(
     () =>
-      MOCK_POSTS.filter(
+      posts.filter(
         (p) => (categoria === 'todas' || p.categoria === categoria) && (!bairro || p.bairro === bairro),
       ),
-    [categoria, bairro],
+    [posts, categoria, bairro],
   )
 
   const pillOptions = [{ value: 'todas' as const, label: 'Todas' }, ...CATEGORIAS]
@@ -47,47 +63,70 @@ export default function FeedPage() {
         </div>
       </div>
 
-      <MapView
-        className="mb-6"
-        markers={filtered.map((p) => ({
-          id: p.id,
-          position: [p.latitude, p.longitude],
-          popupContent: (
-            <div className="text-xs">
-              <b>{p.bairro}</b>
-              <br />
-              {p.descricao.slice(0, 60)}...
-            </div>
-          ),
-        }))}
-      />
-
-      <div className="space-y-3 mb-6">
-        <Pills options={pillOptions} value={categoria} onChange={setCategoria} layoutId="feed-categoria-pill" />
-        <Select value={bairro} onChange={(e) => setBairro(e.target.value)} className="max-w-[220px]">
-          <option value="">Todos os bairros</option>
-          {bairros.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      <p className="text-xs text-grafite-500 mb-3">
-        {filtered.length} {filtered.length === 1 ? 'relato encontrado' : 'relatos encontrados'}
-      </p>
-
-      {filtered.length === 0 ? (
-        <p className="text-sm text-grafite-500">Nenhum post encontrado com esses filtros.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </AnimatePresence>
+      {error ? (
+        <div className="rounded-[var(--radius-field)] bg-status-vermelho-50 text-status-vermelho-700 text-sm p-4 mb-6">
+          Não foi possível carregar os relatos: {error}. Confira se <code>.env.local</code> está
+          configurado com as chaves do Supabase (ver <code>.env.example</code>).
         </div>
+      ) : (
+        <>
+          <MapView
+            className="mb-6"
+            markers={filtered.map((p) => ({
+              id: p.id,
+              position: [p.latitude, p.longitude],
+              popupContent: (
+                <div className="text-xs">
+                  <b>{p.bairro}</b>
+                  <br />
+                  {p.descricao.slice(0, 60)}...
+                </div>
+              ),
+            }))}
+          />
+
+          <div className="space-y-3 mb-6">
+            <Pills
+              options={pillOptions}
+              value={categoria}
+              onChange={setCategoria}
+              layoutId="feed-categoria-pill"
+            />
+            <Select value={bairro} onChange={(e) => setBairro(e.target.value)} className="max-w-[220px]">
+              <option value="">Todos os bairros</option>
+              {bairros.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {loading ? (
+            <p className="text-sm text-grafite-500">Carregando relatos...</p>
+          ) : (
+            <>
+              <p className="text-xs text-grafite-500 mb-3">
+                {filtered.length} {filtered.length === 1 ? 'relato encontrado' : 'relatos encontrados'}
+              </p>
+              {filtered.length === 0 ? (
+                <p className="text-sm text-grafite-500">
+                  {posts.length === 0
+                    ? 'Nenhum relato ainda. Seja o primeiro a publicar.'
+                    : 'Nenhum post encontrado com esses filtros.'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <AnimatePresence mode="popLayout">
+                    {filtered.map((post) => (
+                      <PostCard key={post.id} post={post} />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
 
       <Link to="/feed/novo">
