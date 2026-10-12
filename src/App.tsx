@@ -7,8 +7,10 @@ import PostDetailPage from './features/feed/pages/PostDetailPage'
 import ProjetosPage from './features/projetos/pages/ProjetosPage'
 import ProjetoDetailPage from './features/projetos/pages/ProjetoDetailPage'
 import PainelGestorPage from './features/projetos/pages/PainelGestorPage'
+import CriarProjetoPage from './features/projetos/pages/CriarProjetoPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/auth/SignupPage'
+import PerfilPage from './pages/perfil/PerfilPage'
 import RequireInstitutional from './components/RequireInstitutional'
 import PageTransition from './components/PageTransition'
 
@@ -75,9 +77,14 @@ function NavBar() {
         </div>
         <div>
           {user ? (
-            <button onClick={() => signOut()} className="text-sm text-grafite-500 hover:underline">
-              Sair
-            </button>
+            <div className="flex items-center gap-1">
+              <NavLink to="/perfil" className={linkClass}>
+                Perfil
+              </NavLink>
+              <button onClick={() => signOut()} className="text-sm text-grafite-500 hover:underline px-3 py-2">
+                Sair
+              </button>
+            </div>
           ) : (
             <NavLink to="/entrar" className={linkClass}>
               Entrar
@@ -99,6 +106,16 @@ function AnimatedRoutes() {
         <Route path="/feed/novo" element={<PageTransition><CreatePostPage /></PageTransition>} />
         <Route path="/feed/:id" element={<PageTransition><PostDetailPage /></PageTransition>} />
         <Route path="/projetos" element={<PageTransition><ProjetosPage /></PageTransition>} />
+        <Route
+          path="/projetos/novo"
+          element={
+            <PageTransition>
+              <RequireInstitutional>
+                <CriarProjetoPage />
+              </RequireInstitutional>
+            </PageTransition>
+          }
+        />
         <Route path="/projetos/:id" element={<PageTransition><ProjetoDetailPage /></PageTransition>} />
         <Route
           path="/painel"
@@ -112,6 +129,7 @@ function AnimatedRoutes() {
         />
         <Route path="/entrar" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/cadastro" element={<PageTransition><SignupPage /></PageTransition>} />
+        <Route path="/perfil" element={<PageTransition><PerfilPage /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   )

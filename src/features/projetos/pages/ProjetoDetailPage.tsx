@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MOCK_PROJETOS } from '../mock'
 import { Button, Card } from '../../../components/ui'
-import StatusBadge from '../../../components/StatusBadge'
+import CategoryBadge from '../../../components/CategoryBadge'
+import StatusDestaque from '../components/StatusDestaque'
 
 // Tarefa 3.1 da Ana (Semana 3): tela completa com timeline + votação.
 // A votação aqui é só a interface (UI) — o registro real do voto com hash e
@@ -42,16 +43,30 @@ export default function ProjetoDetailPage() {
         ← Voltar aos Projetos
       </Link>
 
+      <div className="mt-4">
+        <StatusDestaque projeto={projeto} />
+      </div>
+
       <Card className="mt-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <h1 className="font-heading text-xl font-bold text-grafite-900">{projeto.nome}</h1>
-          <StatusBadge status={projeto.status} />
-        </div>
+        <CategoryBadge categoria={projeto.categoria} />
+        <h1 className="font-heading text-xl font-bold text-grafite-900 mt-2 mb-2">{projeto.nome}</h1>
         <p className="text-sm text-grafite-700">{projeto.descricao}</p>
+        {projeto.origem_post_id && (
+          <Link
+            to={`/feed/${projeto.origem_post_id}`}
+            className="inline-block mt-3 text-sm font-semibold text-amarelo-700 hover:underline"
+          >
+            Originado de um relato do Feed →
+          </Link>
+        )}
       </Card>
 
       <Card className="mt-4">
         <h2 className="font-heading text-sm font-bold text-grafite-900 mb-3">Linha do tempo</h2>
+        {projeto.timeline.length === 0 && (
+          // timeline pode vir vazia (contrato de dados) — projeto recém-criado sem marcos
+          <p className="text-sm text-grafite-500">Nenhum marco cadastrado ainda.</p>
+        )}
         <ol className="space-y-3">
           {projeto.timeline.map((marco, i) => (
             <motion.li

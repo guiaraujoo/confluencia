@@ -16,6 +16,9 @@
 
   /* Neutros (grafite quente) */
   --color-grafite-50: #fdfbf4;
+  /* 100: usado nos hovers (hover:bg-grafite-100); sem o token o Tailwind v4
+     não gera a classe e o hover some. Meio-termo entre 50 e 200. */
+  --color-grafite-100: #f3f0e8;
   --color-grafite-200: #e4e1d9;
   --color-grafite-300: #cfcbc0;
   --color-grafite-500: #7c776c;
