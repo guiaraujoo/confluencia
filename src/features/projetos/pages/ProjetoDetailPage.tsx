@@ -1,24 +1,58 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MOCK_PROJETOS } from '../mock'
+import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../context/AuthContext'
+import { gerarHashComprovante } from '../../../lib/votoHash'
 import { Button, Card } from '../../../components/ui'
 import CategoryBadge from '../../../components/CategoryBadge'
 import StatusDestaque from '../components/StatusDestaque'
+import VotoBar from '../components/VotoBar'
+import type { VotosResultado } from '../../../types/database'
 
-// Tarefa 3.1 da Ana (Semana 3): tela completa com timeline + votação.
-// A votação aqui é só a interface (UI) — o registro real do voto com hash e
-// bloqueio de duplicidade é a Tarefa 3.1 do Guilherme (RLS na tabela `votos`,
-// ver supabase/migrations/0004_rls_policies.sql), que ainda não existe num
-// projeto Supabase real. Por isso o "comprovante" abaixo é só visual, gerado
-// no navegador, não persiste em lugar nenhum ainda.
+// Tarefa 3.1 da Ana (Semana 3): tela completa com timeline.
+// Tarefa 3.1 do João ("apoio nas telas de votação"): registro real do voto —
+// insere em `votos` com hash gerado no cliente (ver src/lib/votoHash.ts) e lê
+// o resultado agregado de `votos_resultado`. O bloqueio de voto duplicado é
+// garantido pelo UNIQUE(projeto_id, user_id) do banco (0003_projetos_votos.sql):
+// uma segunda tentativa retorna violação de unicidade, tratada abaixo como
+// "você já votou". O projeto em si (`MOCK_PROJETOS`) ainda é mock — conectar
+// `projetos` ao Supabase real é a Tarefa 3.1 da Ana (branch
+// feature/projetos-dados-reais); a votação já funciona de verdade com
+// qualquer projeto que exista na tabela.
 export default function ProjetoDetailPage() {
   const { id } = useParams()
+  const { user } = useAuth()
   const projeto = MOCK_PROJETOS.find((p) => p.id === id)
   const [voto, setVoto] = useState<'favor' | 'contra' | null>(null)
   const [comprovante, setComprovante] = useState<string | null>(null)
+  const [jaVotou, setJaVotou] = useState(false)
+  const [votando, setVotando] = useState(false)
+  const [erroVoto, setErroVoto] = useState<string | null>(null)
+  const [resultado, setResultado] = useState<VotosResultado | null>(null)
 
-  if (!projeto) {
+  const projetoId = projeto?.id
+
+  useEffect(() => {
+    if (!projetoId) return
+    let cancelled = false
+    supabase
+      .from('votos_resultado')
+      .select('*')
+      .eq('projeto_id', projetoId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) {
+          setResultado(data ?? { projeto_id: projetoId, votos_favor: 0, votos_contra: 0, total_votos: 0 })
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [projetoId])
+
+  if (!projeto || !projetoId) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <p className="text-sm text-grafite-500">Projeto não encontrado.</p>
@@ -29,12 +63,40 @@ export default function ProjetoDetailPage() {
     )
   }
 
-  const projetoId = projeto.id
+  async function votar(opcao: 'favor' | 'contra') {
+    if (!user) {
+      setErroVoto('Entre com sua conta para votar.')
+      return
+    }
+    setVotando(true)
+    setErroVoto(null)
+    const hash = await gerarHashComprovante(projetoId!, user.id)
+    const { error } = await supabase.from('votos').insert({
+      projeto_id: projetoId,
+      user_id: user.id,
+      opcao,
+      hash_comprovante: hash,
+    })
+    setVotando(false)
 
-  function votar(opcao: 'favor' | 'contra') {
+    if (error) {
+      // 23505 = unique_violation (UNIQUE(projeto_id, user_id) da 0003_projetos_votos.sql)
+      if (error.code === '23505') {
+        setJaVotou(true)
+      } else {
+        setErroVoto(`Não foi possível registrar o voto: ${error.message}`)
+      }
+      return
+    }
+
     setVoto(opcao)
-    // placeholder visual — o hash real é gerado no banco (ver Tarefa 3.1 do Guilherme)
-    setComprovante(btoa(`${projetoId}:${Date.now()}`).slice(0, 16))
+    setComprovante(hash.slice(0, 16))
+    setResultado((prev) => ({
+      projeto_id: projetoId!,
+      votos_favor: (prev?.votos_favor ?? 0) + (opcao === 'favor' ? 1 : 0),
+      votos_contra: (prev?.votos_contra ?? 0) + (opcao === 'contra' ? 1 : 0),
+      total_votos: (prev?.total_votos ?? 0) + 1,
+    }))
   }
 
   return (
@@ -104,6 +166,9 @@ export default function ProjetoDetailPage() {
             Seu voto é secreto (nunca vinculado ao seu nome publicamente) e consultivo — não obriga a
             decisão final do governo, mas gera um registro oficial de opinião.
           </p>
+
+          {resultado && <VotoBar favor={resultado.votos_favor} contra={resultado.votos_contra} className="mb-4" />}
+
           <AnimatePresence mode="wait">
             {voto ? (
               <motion.div
@@ -117,18 +182,32 @@ export default function ProjetoDetailPage() {
                 <br />
                 Comprovante: <code className="text-xs">{comprovante}</code>
               </motion.div>
-            ) : (
+            ) : jaVotou ? (
               <motion.div
-                key="botoes"
-                exit={{ opacity: 0, scale: 0.96 }}
-                className="flex gap-3"
+                key="ja-votou"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-[var(--radius-field)] bg-grafite-100 p-3 text-sm text-grafite-700"
               >
-                <Button onClick={() => votar('favor')} className="flex-1">
-                  Votar a favor
-                </Button>
-                <Button variant="secondary" onClick={() => votar('contra')} className="flex-1">
-                  Votar contra
-                </Button>
+                Você já registrou seu voto neste projeto anteriormente. Como o voto é secreto, não é
+                possível mostrar de novo qual opção você escolheu.
+              </motion.div>
+            ) : (
+              <motion.div key="botoes" exit={{ opacity: 0, scale: 0.96 }}>
+                <div className="flex gap-3">
+                  <Button onClick={() => votar('favor')} disabled={votando} className="flex-1">
+                    {votando ? 'Registrando...' : 'Votar a favor'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => votar('contra')}
+                    disabled={votando}
+                    className="flex-1"
+                  >
+                    {votando ? 'Registrando...' : 'Votar contra'}
+                  </Button>
+                </div>
+                {erroVoto && <p className="text-xs text-status-vermelho-500 mt-2">{erroVoto}</p>}
               </motion.div>
             )}
           </AnimatePresence>

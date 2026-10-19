@@ -93,7 +93,7 @@ export interface Projeto {
   created_at: string
 }
 
-// Tabela `votos`: ninguém lê linha a linha. Para o resultado, use VotoResultado.
+// Tabela `votos`: ninguém lê linha a linha. Para o resultado, use VotosResultado.
 export interface Voto {
   id: string
   projeto_id: string
@@ -103,8 +103,9 @@ export interface Voto {
   created_at: string
 }
 
-// View `votos_resultado`: única forma de ler o resultado da votação (só agregados).
-export interface VotoResultado {
+// Espelha a view `votos_resultado` (ver 0003_projetos_votos.sql) — única forma
+// pública de ler votos: contagem agregada, nunca a linha individual.
+export interface VotosResultado {
   projeto_id: string
   votos_favor: number
   votos_contra: number
