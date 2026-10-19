@@ -81,6 +81,15 @@ export interface Voto {
   created_at: string
 }
 
+// Espelha a view `votos_resultado` (ver 0003_projetos_votos.sql) — única forma
+// pública de ler votos: contagem agregada, nunca a linha individual.
+export interface VotosResultado {
+  projeto_id: string
+  votos_favor: number
+  votos_contra: number
+  total_votos: number
+}
+
 export interface Profile {
   id: string
   nome: string
