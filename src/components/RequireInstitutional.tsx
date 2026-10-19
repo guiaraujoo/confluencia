@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { isSupabaseConfigured } from '../lib/supabase'
 import { Card } from './ui'
 
 /**
@@ -11,6 +12,23 @@ import { Card } from './ui'
  */
 export default function RequireInstitutional({ children }: { children: ReactNode }) {
   const { user, profile, loading } = useAuth()
+
+  // Modo demonstração: sem projeto Supabase configurado não existe conta
+  // institucional possível, então liberamos a tela com dados mock para que a
+  // demo (e a apresentação) consiga mostrar o painel e o formulário. Com o
+  // Supabase configurado esse atalho some e a checagem real vale.
+  if (!isSupabaseConfigured) {
+    return (
+      <>
+        <div className="max-w-5xl mx-auto px-4 pt-4">
+          <p className="rounded-[var(--radius-field)] bg-amarelo-100 px-3 py-2 text-xs text-grafite-700">
+            Modo demonstração: dados fictícios, nada é salvo de verdade.
+          </p>
+        </div>
+        {children}
+      </>
+    )
+  }
 
   if (loading) {
     return <div className="max-w-md mx-auto px-4 py-16 text-sm text-grafite-500">Carregando...</div>

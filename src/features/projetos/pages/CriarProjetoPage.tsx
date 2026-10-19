@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { supabase } from '../../../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import { MOCK_POSTS } from '../../feed/mock'
+import { MOCK_PROJETOS } from '../mock'
 import { Button, Card, FormError, Label, Select, TextArea, TextField } from '../../../components/ui'
 import {
   CATEGORIAS,
@@ -66,6 +67,33 @@ export default function CriarProjetoPage() {
       setError('Cada marco da linha do tempo precisa de nome e data prevista.')
       return
     }
+    const timeline = preenchidos.map((m) => ({
+      nome: m.nome.trim(),
+      data_prevista: m.data_prevista,
+      data_real: null,
+    }))
+    // fim do dia escolhido, no fuso de quem preencheu
+    const consultaFimIso = status === 'em_consulta' ? new Date(`${consultaFim}T23:59:59`).toISOString() : null
+
+    // Modo demonstração (Tarefa 2.3: "Publicar pode só simular sucesso"): sem Supabase
+    // configurado, o projeto entra na lista mock e some ao recarregar a página.
+    if (!isSupabaseConfigured) {
+      MOCK_PROJETOS.unshift({
+        id: crypto.randomUUID(),
+        orgao_id: 'mock-orgao-1',
+        nome: nome.trim(),
+        descricao: descricao.trim(),
+        categoria,
+        status,
+        origem_post_id: origemPostId || null,
+        timeline,
+        consulta_fim: consultaFimIso,
+        created_at: new Date().toISOString(),
+      })
+      navigate('/painel')
+      return
+    }
+
     if (!user) {
       setError('Você precisa estar logado para publicar um projeto.')
       return
@@ -79,9 +107,8 @@ export default function CriarProjetoPage() {
       categoria,
       status,
       origem_post_id: origemPostId || null,
-      timeline: preenchidos.map((m) => ({ nome: m.nome.trim(), data_prevista: m.data_prevista, data_real: null })),
-      // fim do dia escolhido, no fuso de quem preencheu
-      consulta_fim: status === 'em_consulta' ? new Date(`${consultaFim}T23:59:59`).toISOString() : null,
+      timeline,
+      consulta_fim: consultaFimIso,
     })
     setLoading(false)
 

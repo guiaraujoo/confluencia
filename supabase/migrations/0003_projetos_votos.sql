@@ -29,7 +29,7 @@ alter table projetos enable row level security;
 
 -- Votos: secreto mas auditável.
 -- "opcao" nunca é lida linha a linha por consulta pública — só via função agregada
--- (ver 0004_votos_rls.sql). A UNIQUE(projeto_id, user_id) é o bloqueio de voto
+-- (ver 0004_rls_policies.sql). A UNIQUE(projeto_id, user_id) é o bloqueio de voto
 -- duplicado no nível do banco, não só na tela.
 create table if not exists votos (
   id uuid primary key default gen_random_uuid(),
