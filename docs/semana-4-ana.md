@@ -2,7 +2,7 @@
 
 **Branch:** `feature/feed-projetos-origem` · **Tarefas:** 4.1, 4.2 e 4.3 do guia individual · **Atualizado em:** 04/11/2026
 
-Resumo: o campo "origem" agora liga os dois módulos nos dois sentidos, o banco ganhou a migration `0010` (corrige um bug real e acelera as consultas de Projetos) e as telas de Projetos não estouram mais a largura no celular.
+Resumo: o campo "origem" agora liga os dois módulos nos dois sentidos, o banco ganhou a migration `0011` (corrige um bug real e acelera as consultas de Projetos) e as telas de Projetos não estouram mais a largura no celular.
 
 ## Tarefa 4.1: Feed ↔ Projetos pelo campo origem
 
@@ -23,7 +23,9 @@ Todas as consultas novas ficam em `src/features/projetos/origem.ts`, no mesmo pa
 
 ## Tarefa 4.2: ajustes do módulo e revisão do banco
 
-### Migration `0010_origem_e_desempenho.sql`
+### Migration `0011_origem_e_comprovantes.sql`
+
+Escrita como 0010 ao mesmo tempo que a 0010 do Guilherme. Na integração virou 0011 e deixou com a 0010 dele o que as duas faziam igual: `comprovantes_publicos` sem rejeitados, o índice do painel do gestor e o da recorrência do Feed.
 
 | Problema | Correção |
 |---|---|
@@ -34,11 +36,11 @@ Todas as consultas novas ficam em `src/features/projetos/origem.ts`, no mesmo pa
 | Painel do gestor (`orgao_id` + mais recentes) e listagem pública (mais recentes) sem índice adequado | Índices `(orgao_id, created_at desc)` e `(created_at desc)` |
 | A recorrência do Feed (mesma categoria + bairro + 30 dias) é calculada para cada relato, com índices separados | Índice composto `(categoria, bairro, created_at desc)` |
 
-A 0010 pode rodar mais de uma vez sem erro.
+A 0011 pode rodar mais de uma vez sem erro.
 
-**Como foi testado:** `supabase/testes/testar-migrations.mjs` aplica 0001 → 0010 num Postgres real em memória (PGlite) e simula as três contas (órgão, cidadã, visitante):
+**Como foi testado:** `supabase/testes/testar-migrations.mjs` aplica 0001 → 0011 num Postgres real em memória (PGlite) e simula as três contas (órgão, cidadã, visitante):
 
-| Cenário | Só até a 0009 | Com a 0010 |
+| Cenário | Só até a 0009 | Com a 0010 e a 0011 |
 |---|---|---|
 | Órgão responde "Virou projeto" e a autora é notificada | ✓ | ✓ |
 | Cidadã não consegue publicar resposta oficial | ✓ | ✓ |
@@ -73,7 +75,7 @@ Falta o passo 3 do guia: **pedir para o João e o Guilherme testarem** no celula
 
 ## Roteiro de teste (Buffer: como gestor e como cidadão)
 
-Com a 0010 aplicada e as contas de demonstração:
+Com a 0011 aplicada e as contas de demonstração:
 
 1. **Cidadã:** publique um relato no Feed. Anote o protocolo (`OC-…`).
 2. **Órgão:** abra o relato → "Criar projeto a partir deste relato". Confira que relato e categoria vieram preenchidos. Publique em consulta.
@@ -85,6 +87,6 @@ Com a 0010 aplicada e as contas de demonstração:
 
 ## Para o Guilherme
 
-- Aplicar a `0010` depois da 0009 (Tarefa 4.1 dele).
+- Aplicar a `0011` no Supabase (a 0010 dele já está aplicada).
 - A 0007 não deixa o órgão editar `origem_post_id` depois de criado (de propósito). Se o grupo quiser "ligar a um relato depois", basta incluir a coluna no `grant update` da 0007.
 - Continuam abertos para a revisão de segurança dele: `registrar_voto` × `votar` e o anonimato forte do voto.

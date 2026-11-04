@@ -1,20 +1,18 @@
--- Confluência — 0010 (Ana, Semana 4): Feed ↔ Projetos pelo campo origem + revisão do banco.
--- Tarefas 4.1 e 4.2 da Ana, revisadas com o Guilherme. Rode DEPOIS da 0001 → 0009.
+-- Confluência — 0011 (Ana, Semana 4): Feed ↔ Projetos pelo campo origem + revisão do banco.
+-- Tarefas 4.1 e 4.2 da Ana, revisadas com o Guilherme. Rode DEPOIS da 0001 → 0010.
+-- Escrita como 0010 em paralelo com a 0010 do Guilherme; na integração virou 0011 e
+-- perdeu o que a 0010 dele já faz (comprovantes_publicos sem rejeitados, índice do
+-- painel do gestor e índice da recorrência do Feed).
 -- Pode rodar mais de uma vez sem erro (tudo é "if not exists" / "or replace").
 --
 -- O que muda (detalhes em docs/semana-4-ana.md):
 --  1. Apagar um relato que virou projeto deixava de funcionar (a chave estrangeira
 --     de projetos.origem_post_id bloqueava). Agora o projeto fica e só perde o link.
 --  2. Índice para "este relato virou projeto?" (consulta nova da tela do relato).
---  3. Índice para o painel do gestor (projetos do órgão, mais recentes primeiro)
---     e para a listagem pública (mais recentes primeiro).
+--  3. Índice para a listagem pública (mais recentes primeiro).
 --  4. verificar_comprovante: a busca pelo começo do hash (LIKE 'abc%') varria a
 --     tabela `votos` inteira. Agora usa um índice nos 16 primeiros caracteres.
---  5. Índice para a recorrência da view do Feed (mesma categoria + bairro + data),
---     que é calculada para cada relato listado.
---  6. comprovantes_publicos deixa de listar comprovantes de projetos rejeitados
---     (mesma regra que a 0007 aplicou em votos_resultado). Ponto em aberto de
---     docs/banco-de-dados.md, combinado com o Guilherme.
+--  5. Índice para achar as respostas oficiais que apontam para um projeto.
 
 -- 1. Relato apagado não trava mais (on delete set null) ---------------------------
 -- A 0003 criou a referência sem regra de exclusão, então o padrão é "restrict":
@@ -46,9 +44,8 @@ create index if not exists projetos_origem_post_idx
   on public.projetos (origem_post_id)
   where origem_post_id is not null;
 
--- 3. Painel do gestor e listagem pública --------------------------------------------
--- listarProjetosDoOrgao: where orgao_id = ? order by created_at desc
-create index if not exists projetos_orgao_created_idx on public.projetos (orgao_id, created_at desc);
+-- 3. Listagem pública ---------------------------------------------------------------
+-- (O índice do painel do gestor, projetos_orgao_idx, já vem da 0010.)
 -- listarProjetosPublicos: where status <> 'rejeitado' order by created_at desc
 create index if not exists projetos_created_idx on public.projetos (created_at desc);
 
@@ -79,24 +76,9 @@ $$;
 
 grant execute on function public.verificar_comprovante(text) to anon, authenticated;
 
--- 5. Recorrência da view do Feed ------------------------------------------------------
--- posts_repercussao conta, para cada relato, os outros da mesma categoria e bairro
--- nos últimos 30 dias. Com índices separados em categoria e bairro (0001), o banco
--- só usa um deles; o composto resolve a contagem direto no índice.
-create index if not exists posts_categoria_bairro_data_idx on public.posts (categoria, bairro, created_at desc);
-
+-- 5. Respostas oficiais ligadas a projeto -------------------------------------------
 -- Respostas oficiais que apontam para um projeto (on delete set null da 0008
 -- precisa achar essas linhas quando um projeto é apagado).
 create index if not exists respostas_projeto_idx
   on public.respostas_oficiais (projeto_id)
   where projeto_id is not null;
-
--- 6. Comprovantes públicos sem projetos rejeitados ------------------------------------
--- Mesmas colunas da 0006 (projeto_id, hash_comprovante), com a regra da 0007.
-create or replace view public.comprovantes_publicos as
-select v.projeto_id, v.hash_comprovante
-from votos v
-join projetos p on p.id = v.projeto_id
-where p.status <> 'rejeitado' or p.orgao_id = auth.uid();
-
-grant select on public.comprovantes_publicos to anon, authenticated;

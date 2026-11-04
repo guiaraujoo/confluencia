@@ -1,11 +1,11 @@
-// Testa as migrations 0001 → 0010 num Postgres de verdade, em memória (PGlite),
+// Testa as migrations 0001 → 0011 num Postgres de verdade, em memória (PGlite),
 // sem tocar no Supabase. Tarefa 4.2 da Ana (revisão do banco com o Guilherme).
 //
 // Como rodar (fora do projeto, para não adicionar dependência ao app):
 //   mkdir /tmp/pgtest && cd /tmp/pgtest && npm init -y && npm i @electric-sql/pglite@0.4.0
 //   cp <repo>/supabase/testes/testar-migrations.mjs . 
-//   node testar-migrations.mjs <repo>/supabase/migrations 10   # com a 0010
-//   node testar-migrations.mjs <repo>/supabase/migrations 9    # sem a 0010 (mostra os 2 bugs)
+//   node testar-migrations.mjs <repo>/supabase/migrations 11   # com a 0010 e a 0011
+//   node testar-migrations.mjs <repo>/supabase/migrations 9    # sem a 0010 e a 0011 (mostra os 2 bugs)
 //
 // Simula o mínimo do Supabase: schema auth, auth.uid() lendo o usuário da sessão,
 // papéis anon/authenticated com as permissões padrão. Cada ✓/✗ é um cenário.
@@ -13,7 +13,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto'
 import fs from 'node:fs'
 const dir = process.argv[2]
-const ate = Number(process.argv[3] ?? 10)
+const ate = Number(process.argv[3] ?? 11)
 const db = new PGlite({ extensions: { pgcrypto } })
 const shim = `
 create role anon nologin; create role authenticated nologin;
@@ -31,7 +31,7 @@ for (const f of migs) {
   try { await db.exec(fs.readFileSync(`${dir}/${f}`, 'utf8')); console.log('aplicada', f) }
   catch (e) { console.log('FALHOU', f, e.message); process.exit(1) }
 }
-if (ate >= 10) { await db.exec(fs.readFileSync(`${dir}/0010_origem_e_desempenho.sql`, 'utf8')); console.log('0010 reaplicada (idempotente) ok') }
+for (const f of migs.filter((f) => Number(f.slice(0, 4)) >= 10)) { await db.exec(fs.readFileSync(`${dir}/${f}`, 'utf8')); console.log(f, 'reaplicada (idempotente) ok') }
 
 const ORG='11111111-1111-1111-1111-111111111111', CID='22222222-2222-2222-2222-222222222222', OUT='33333333-3333-3333-3333-333333333333'
 await db.exec(`

@@ -33,7 +33,7 @@
 | [Votação](votacao.md) | Voto secreto e auditável: função, comprovante e erros (Guilherme) |
 | [Revisão da 0003](revisao-0003-projetos-votos.md) | Revisão de segurança das tabelas de projetos e votos |
 | [Wireframes de Projetos e Perfil](wireframes-projetos-perfil.md) | Esqueleto das telas da Ana na Semana 1 |
-| [Semana 4 da Ana](semana-4-ana.md) | Feed ↔ Projetos pelo campo origem, revisão do banco (0010) e responsividade de Projetos |
+| [Semana 4 da Ana](semana-4-ana.md) | Feed ↔ Projetos pelo campo origem, revisão do banco (0011) e responsividade de Projetos |
 
 ## 3. Qualidade
 
