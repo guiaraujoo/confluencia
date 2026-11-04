@@ -19,6 +19,8 @@ O cidadão relata um problema no mapa, o relato ganha peso pela recorrência e p
 ## Sumário
 
 - [O que faz](#o-que-faz)
+- [Contas de demonstração](#contas-de-demonstração)
+- [O que ficou fora do MVP](#o-que-ficou-fora-do-mvp)
 - [Documentação](#documentação)
 - [Stack](#stack)
 - [Como rodar](#como-rodar)
@@ -36,6 +38,28 @@ O cidadão relata um problema no mapa, o relato ganha peso pela recorrência e p
 | **Perfil** | Todos | Uma página pública com relatos, respostas, projetos acompanhados, bairros seguidos e a conta |
 
 O ciclo e os princípios estão em [Visão do produto](docs/visao-produto.md); cada tela, com capturas, no [Guia de uso](docs/guia-de-uso.md).
+
+## Contas de demonstração
+
+O cadastro está fechado no MVP. A tela **Entrar** tem um botão para cada conta; a senha das duas é `confluencia2026`.
+
+| Conta | E-mail | Papel |
+|---|---|---|
+| Marina | `cidada.demo@confluencia.app` | Cidadã: relata, apoia, comenta, segue bairros, vota |
+| Secretaria de Mobilidade | `gestor.demo@confluencia.app` | Órgão verificado: responde relatos, cria projetos, abre consulta, publica atualizações |
+
+Os dados das duas vêm de `supabase/seed-social-demo.sql` e `supabase/seed_projetos.sql`. O projeto **Reforma da iluminação da Av. Boa Viagem** fica em consulta até 20/12/2026 para a votação ao vivo.
+
+## O que ficou fora do MVP
+
+| Fora | Por quê | Consequência hoje |
+|---|---|---|
+| Login com CPF / gov.br | Exige credenciamento | Identidade é e-mail e senha; o voto é consultivo e a tela diz isso |
+| Cadastro aberto | Sem identidade oficial, cada conta nova seria um voto a mais | Só as contas demo e contas criadas pelo time no painel |
+| Modelo preditivo de impacto | Não há dados nem modelo | A simulação de antes e depois é marcada como ilustrativa |
+| Moderação automatizada | Fora do escopo | Relato ofensivo ou falso sai só apagando no banco |
+
+Detalhes e plano de continuação em [Limitações e próximos passos](docs/limitacoes-e-proximos-passos.md).
 
 ## Documentação
 
@@ -58,7 +82,7 @@ O ciclo e os princípios estão em [Visão do produto](docs/visao-produto.md); c
 - **MapLibre GL + deck.gl** no mapa do Feed (OpenFreeMap, sem chave de API)
 - **GSAP** (landing e títulos) e **Framer Motion** (interface)
 - **Supabase**: Postgres, Auth e Row Level Security; as regras sensíveis ficam no banco
-- **Vercel**: deploy a cada merge na `main`, preview por PR
+- **Vercel**: deploy a cada merge na `main`, preview por PR; `vercel.json` manda toda rota para o `index.html`, então recarregar em `/projetos/p1` não dá 404
 
 ## Como rodar
 
@@ -70,13 +94,14 @@ cp .env.example .env.local   # VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
 
-Sem `.env.local`, Projetos funciona em modo demonstração (votação simulada); o Feed e o login precisam do banco. Para montar um banco do zero, aplique `supabase/migrations/0001` a `0009` em ordem (passo a passo em [`supabase/README.md`](supabase/README.md)).
+Sem `.env.local`, Projetos funciona em modo demonstração (votação simulada); o Feed e o login precisam do banco. Para montar um banco do zero, aplique `supabase/migrations/0001` a `0010` em ordem e depois os seeds `seed-social-demo.sql` e `seed_projetos.sql` (passo a passo, teste de RLS e backup em [`supabase/README.md`](supabase/README.md)).
 
 | Comando | Faz |
 |---|---|
 | `npm run dev` | Servidor local |
 | `npm run build` | Tipagem + build de produção |
 | `npm run lint` | oxlint |
+| `npm run test:rls` | Tenta burlar as regras do banco pela API, como Marina e como Secretaria |
 
 ## Estrutura
 
@@ -90,7 +115,8 @@ src/
   context/             sessão (Supabase Auth)
   lib/                 cliente Supabase, repercussão, contas demo
   types/database.ts    contrato de dados
-supabase/migrations/   esquema, RLS e funções (0001 a 0009)
+supabase/migrations/   esquema, RLS e funções (0001 a 0010)
+scripts/testar-rls.mjs tentativas de burla do RLS (npm run test:rls)
 docs/                  documentação
 ```
 

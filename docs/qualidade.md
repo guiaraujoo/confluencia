@@ -31,7 +31,19 @@ Capturas das 10 telas usadas no [Guia de uso](guia-de-uso.md), em 1440×900 e 39
 
 ### Banco real (29/10, consultas com a chave pública)
 
-Ver [o que está aplicado em produção](banco-de-dados.md#o-que-esta-aplicado-em-producao): 0001 a 0006 aplicadas; 0007, 0008 e 0009 não.
+Ver [o que está aplicado em produção](banco-de-dados.md#o-que-está-aplicado-em-produção): 0001 a 0010 aplicadas em 30/10.
+
+### Tentativas de burla (30/10, Guilherme 4.3)
+
+`npm run test:rls` entra pela API com a chave pública, como Marina e como Secretaria, e tenta: votar duas vezes, inserir e ler `votos`, votar pela `registrar_voto`, criar projeto, mudar `orgao_id`, editar projeto alheio, ler e filtrar `posts.user_id`, ver autor de relato anônimo pela view, relatar e comentar como outra pessoa, se autopromover a institucional, editar perfil alheio, publicar resposta oficial, criar e ler notificação alheia, achar hash de projeto rejeitado, votar e seguir bairro sem login, e (como gestor) transferir o próprio projeto.
+
+| Onde | Bloqueados | Furos | Não testados |
+|---|---|---|---|
+| Produção, 30/10 (0001 a 0006) | 12 | 4: `posts.user_id` legível e filtrável (Marina e gestor), cadastro aberto no Auth | 9, tabelas e funções da 0007/0008 ainda não existem |
+| Ensaio local (PGlite) de 0001 a 0010 + seeds, partindo do estado de produção | Todos | 0 | |
+| Produção, 30/10, depois de aplicar 0007 a 0010, os seeds e fechar o cadastro | 24 | 0 | 1: voto duplicado, para não gastar o voto da Marina (coberto no ensaio local) |
+
+O ensaio local também confirmou que a 0010 e os seeds podem rodar duas vezes, que o voto duplicado volta `23505`, que `comprovantes_publicos` esconde o hash de projeto rejeitado da Marina e mostra ao órgão dono, e que o gestor ainda consegue atualizar o status do próprio projeto.
 
 ## Desempenho medido
 
@@ -68,11 +80,15 @@ Antes de dividir por rota (`React.lazy`), o pacote único tinha 2,2 MB.
 
 | Problema | Gravidade | Situação |
 |---|---|---|
-| Votar em projeto do banco dá erro (função `votar` não existe em produção) | Trava o uso | Aplicar a 0007 (Guilherme 4.1). Hoje nenhum projeto do banco está em consulta, então ninguém vê o erro |
-| Comentários, respostas oficiais, notificações e anonimato sem efeito no banco real | Trava o uso dessas funções | Aplicar a 0008 e o `seed-social-demo.sql` (Guilherme 4.1) |
+| Votar em projeto do banco dá erro (função `votar` não existe em produção) | Trava o uso | Resolvido: 0007 aplicada em 30/10 |
+| Comentários, respostas oficiais, notificações e anonimato sem efeito no banco real | Trava o uso dessas funções | Resolvido: 0008 e seed aplicados em 30/10 |
 | Dados de teste com `[SEED]` aparecem para o público (relato "Em alta" no Feed, 3 projetos) | Visual, mas aparece na apresentação | Apagar ou renomear antes da apresentação (Guilherme 4.2) |
-| Duas funções de voto no banco | Segurança | Remover uma (Guilherme 4.3 com Ana 4.2) |
-| `comprovantes_publicos` mostra hashes de projetos rejeitados | Segurança, baixa | Filtrar na view (Guilherme 4.3) |
+| Autor de qualquer relato legível em `posts.user_id` pela API | Segurança, alta | Resolvido: 0009 aplicada em 30/10 |
+| Cadastro aberto pela API (`disable_signup: false`), embora o botão esteja desativado; dá para criar contas e votar várias vezes | Segurança, alta | Resolvido: cadastro fechado no Auth em 30/10 |
+| Nenhum projeto do banco em consulta, e o prazo da Av. Boa Viagem (14/11) acabaria antes da apresentação | Trava a demonstração do voto | `seed_projetos.sql` refeito: passa os `[SEED]` para o gestor demo e reabre a consulta até 20/12. Aplicado em 30/10 |
+| Duas funções de voto no banco | Segurança | Resolvido: `0010` removeu `registrar_voto` |
+| `comprovantes_publicos` mostra hashes de projetos rejeitados | Segurança, baixa | Resolvido na `0010` |
+| Órgão podia ligar resposta oficial a projeto de outro órgão | Segurança, baixa | Policy corrigida na `0010` |
 | Clusters do PR #8 ficaram no mapa Leaflet antigo; o Feed novo não agrupava pontos | Desempenho com muitos relatos | Resolvido no PR #12 (agrupamento no MapaVivo; Leaflet removido) |
 | Feed e detalhe do relato gastavam ~560 e ~570 ms de JavaScript por segundo parados | Desempenho | Resolvido no PR #12 (~25 e ~50 ms/s) |
 | Feed fica vazio sem `.env.local` (não há modo demonstração no Feed) | Só desenvolvimento | Registrado |

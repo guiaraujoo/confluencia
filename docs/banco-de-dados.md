@@ -15,6 +15,7 @@ Postgres no Supabase. Todo o esquema está em `supabase/migrations/`, em arquivo
 | `0007_votacao_projetos.sql` | Função `votar` (a que o app usa), `verificar_comprovante`, projeto rejeitado privado, update só nas colunas de gestão | Ana 3.3 |
 | `0008_rede_social.sql` | Perfil público, relato anônimo, comentários, respostas oficiais, bairros seguidos, notificações; nova `posts_repercussao` | João (repaginada) |
 | `0009_fechar_autor.sql` | Fecha a coluna do autor na tabela `posts` (o anonimato passa a valer no banco) | João (repaginada) |
+| `0010_seguranca_desempenho.sql` | Remove `registrar_voto`; `comprovantes_publicos` sem rejeitados; resposta oficial só com projeto do próprio órgão; `search_path` em `handle_new_user`; índices | Guilherme 4.2/4.3 |
 
 Dados de exemplo (opcionais, depois das migrations): `seed_repercussao.sql`, `seed_projetos.sql`, `seed-social-demo.sql` e `seed-teste-2.2.sql`. Tudo que é de teste tem o prefixo `[SEED]` no nome ou na descrição.
 
@@ -24,12 +25,12 @@ Conferido em 29/10/2026 consultando a API do Supabase com a chave pública:
 
 | Migration | Situação |
 |---|---|
-| 0001 a 0006 | Aplicadas (`comprovantes_publicos` e `registrar_voto` existem) |
-| 0007 | **Falta aplicar.** Sem ela, a função `votar` não existe e votar em projeto do banco dá erro |
-| 0008 | **Falta aplicar.** Comentários, respostas oficiais, bairros seguidos, notificações e relato anônimo não funcionam no banco real |
-| 0009 | **Falta aplicar,** e só depois da 0008 |
+| 0001 a 0010 | Aplicadas em 30/10/2026, na ordem de [`supabase/README.md`](../supabase/README.md#banco-que-já-tem-0001-a-0006-produção-em-2910), com `seed-social-demo.sql` e `seed_projetos.sql` |
+| Auth | Cadastro fechado (`disable_signup: true`); as duas contas demo entram |
 
-Aplicar 0007, 0008, os seeds e por fim a 0009 é a Tarefa 4.1 do Guilherme na Semana 4. O app foi escrito para não quebrar antes disso: sem a 0008 o formulário publica sem o campo `anonimo` e o perfil cai para o básico.
+Conferido depois de aplicar: o Feed lê 14 relatos pela `posts_repercussao` (2 com resposta oficial), o gestor demo é verificado e tem os 3 projetos `[SEED]` no painel, a Av. Boa Viagem está em consulta até 20/12, e o `npm run test:rls` dá 24 bloqueados e 0 furos.
+
+O app foi escrito para não quebrar antes disso: sem a 0008 o formulário publica sem o campo `anonimo` e o perfil cai para o básico.
 
 ## Tabelas
 
@@ -51,14 +52,13 @@ Aplicar 0007, 0008, os seeds e por fim a 0009 é a Tarefa 4.1 do Guilherme na Se
 |---|---|
 | `posts_repercussao` | Leitura do Feed. Junta o relato com `recorrencia` (relatos da mesma categoria e bairro em 30 dias), `interacoes` (apoios), `repercussao` (soma), `comentarios` e `status_oficial`. Devolve `user_id` nulo em relato anônimo, a não ser para o próprio autor |
 | `votos_resultado` | Placar agregado por projeto (`votos_favor`, `votos_contra`, `total_votos`). Depois da 0007, esconde projetos rejeitados de quem não é o órgão dono |
-| `comprovantes_publicos` | Lista de hashes por projeto, sem usuário, opção ou data, para auditoria pública |
+| `comprovantes_publicos` | Lista de hashes por projeto, em ordem de hash, sem usuário, opção ou data, para auditoria pública. Depois da 0010, sem projetos rejeitados (menos para o órgão dono) |
 
 ## Funções
 
 | Função | Quem chama | O que faz |
 |---|---|---|
 | `votar(projeto, opcao)` | App (cédula) | Confere login, opção, status `em_consulta` e prazo; grava o voto; gera e devolve o hash SHA-256 no banco. Erros: `28000` sem login, `CF001` fora de consulta, `CF002` prazo encerrado, `23505` já votou |
-| `registrar_voto(projeto, opcao)` | Nenhuma tela (versão do Guilherme) | Mesma ideia, com erros em texto (`ja_votou`, `votacao_encerrada`...). Uma das duas deve ser removida na revisão de segurança |
 | `meu_comprovante(projeto)` | App | Hash do próprio voto, ou nulo. Nunca a opção |
 | `verificar_comprovante(hash)` | App (qualquer pessoa) | Aceita 16 a 64 caracteres hexadecimais e devolve projeto e data, se existir |
 | `nome_publico(id)` | Gatilhos de notificação | Nome do órgão, apelido ou nome da pessoa |
@@ -70,14 +70,18 @@ Aplicar 0007, 0008, os seeds e por fim a 0009 é a Tarefa 4.1 do Guilherme na Se
 |---|---|---|
 | Visitante | Ler relatos, apoios, comentários, respostas, projetos públicos, placar, perfis | Escrever qualquer coisa |
 | Cidadão logado | Relatar, apoiar e desapoiar, comentar e apagar o próprio comentário, seguir bairros, votar uma vez por projeto, editar nome, apelido, bairro e bio | Ler votos, se marcar como institucional, criar projeto, responder oficialmente, ver o autor de relato anônimo |
-| Órgão verificado | Tudo do cidadão + criar projeto, editar status, linha do tempo e prazo dos próprios projetos, ver os próprios rejeitados, publicar resposta oficial | Trocar o dono de um projeto, editar projeto de outro órgão |
+| Órgão verificado | Tudo do cidadão + criar projeto, editar status, linha do tempo e prazo dos próprios projetos, ver os próprios rejeitados, publicar resposta oficial | Trocar o dono de um projeto, editar projeto de outro órgão, ligar resposta oficial a projeto de outro órgão |
 | Administrador | Marcar `institucional_verificado` pelo painel do Supabase | |
+
+## Índices
+
+Além das chaves e das `UNIQUE`: `posts (bairro, categoria, created_at)` para a recorrência da `posts_repercussao` (0010; substitui o índice só por bairro), `posts (categoria)`, `posts (created_at desc)`, `projetos (status)`, `projetos (orgao_id, created_at desc)` para o painel do gestor, `respostas_oficiais (post_id, created_at)` e `(orgao_id, created_at desc)`, `comentarios (post_id, created_at)` e `notificacoes (user_id, created_at desc)`. `votos` não precisa de índice por `projeto_id`: a `UNIQUE (projeto_id, user_id)` já começa por ele.
 
 ## Pontos em aberto
 
-- Duas funções de voto convivem (`registrar_voto` e `votar`). O app usa `votar`.
-- `comprovantes_publicos` lista também hashes de projetos rejeitados, que a 0007 tornou privados.
+- Resolvidos na 0010: duas funções de voto (ficou só `votar`) e hashes de projetos rejeitados em `comprovantes_publicos`.
+- `profiles` é legível por todos, inclusive o `nome` completo. Num relato anônimo o autor não aparece, mas em relato comum o nome real é público junto com o apelido.
 - Quem tem acesso administrativo ao banco consegue cruzar `user_id` e `opcao` em `votos`. Anonimato forte fica para a próxima fase (ver [Votação](votacao.md)).
 - A recorrência conta 30 dias a partir de hoje, não da data do relato.
 
-Os três primeiros estão na Tarefa 4.3 do Guilherme (revisão de segurança).
+Testes de burla: `npm run test:rls` (ver [`supabase/README.md`](../supabase/README.md#testar-o-rls)).
