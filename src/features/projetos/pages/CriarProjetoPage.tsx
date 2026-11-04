@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
-import { MOCK_POSTS } from '../../feed/mock'
 import { MOCK_PROJETOS } from '../mock'
+import { avisarRelatoQueVirouProjeto, listarRelatosParaOrigem, type RelatoResumo } from '../origem'
+import SeletorRelato from '../components/SeletorRelato'
 import { Button, Card, FormError, Label, Select, TextArea, TextField } from '../../../components/ui'
 import {
   CATEGORIAS,
@@ -18,9 +19,10 @@ import {
 // Cada campo corresponde a uma coluna de `projetos` (ver docs/wireframes-projetos-perfil.md
 // e docs/contrato-de-dados.md). Protegido por RequireInstitutional em App.tsx; o RLS
 // "projetos: so institucional verificado cria" é quem garante isso de verdade.
-// O select "Relato de origem" lista posts reais quando o Supabase está configurado
-// (os ids são uuid — com os ids do mock o insert falharia). Sem Supabase, usa MOCK_POSTS.
-type PostOrigem = { id: string; bairro: string; descricao: string }
+// Tarefa 4.1: o "Relato de origem" é escolhido por busca (SeletorRelato), lendo os
+// relatos por ../origem.ts (reais com Supabase, MOCK_POSTS sem). Também chega
+// pronto pela URL: o botão "Criar projeto a partir deste relato", no detalhe do
+// relato, abre /projetos/novo?origem=<id do post>.
 
 // Na criação, só faz sentido nascer proposto ou já em consulta; os outros
 // status mudam depois, pelo painel de gestor.
@@ -34,34 +36,38 @@ const novoMarco = (): MarcoForm => ({ key: crypto.randomUUID(), nome: '', data_p
 export default function CriarProjetoPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [nome, setNome] = useState('')
   const [descricao, setDescricao] = useState('')
   const [categoria, setCategoria] = useState<Categoria>('mobilidade')
   const [status, setStatus] = useState<ProjetoStatus>('proposto')
   const [consultaFim, setConsultaFim] = useState('')
-  const [origemPostId, setOrigemPostId] = useState('')
+  const [origemPostId, setOrigemPostId] = useState(() => params.get('origem') ?? '')
   const [marcos, setMarcos] = useState<MarcoForm[]>(() => [novoMarco()])
-  const [postsOrigem, setPostsOrigem] = useState<PostOrigem[]>(() => (isSupabaseConfigured ? [] : MOCK_POSTS))
+  const [relatos, setRelatos] = useState<RelatoResumo[] | null>(null)
+  const [erroRelatos, setErroRelatos] = useState<string | null>(null)
   // data mínima da consulta, calculada uma vez (não a cada render)
   const [hoje] = useState(() => new Date().toISOString().slice(0, 10))
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return
     let cancelled = false
-    supabase
-      .from('posts')
-      .select('id, bairro, descricao')
-      .order('created_at', { ascending: false })
-      .limit(100)
-      .then(({ data }) => {
-        if (!cancelled && data) setPostsOrigem(data)
+    listarRelatosParaOrigem()
+      .then((lista) => {
+        if (cancelled) return
+        setRelatos(lista)
+        // Veio pela URL com a categoria do relato: o projeto já nasce na mesma categoria.
+        const daUrl = lista.find((r) => r.id === params.get('origem'))
+        if (daUrl) setCategoria(daUrl.categoria)
+      })
+      .catch((err) => {
+        if (!cancelled) setErroRelatos(err instanceof Error ? err.message : 'erro desconhecido')
       })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [params])
 
   function updateMarco(index: number, patch: Partial<MarcoForm>) {
     setMarcos((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)))
@@ -118,7 +124,7 @@ export default function CriarProjetoPage() {
     }
 
     setLoading(true)
-    const { error: insertError } = await supabase.from('projetos').insert({
+    const { data: criado, error: insertError } = await supabase.from('projetos').insert({
       orgao_id: user.id,
       nome: nome.trim(),
       descricao: descricao.trim(),
@@ -127,17 +133,32 @@ export default function CriarProjetoPage() {
       origem_post_id: origemPostId || null,
       timeline,
       consulta_fim: consultaFimIso,
-    })
-    setLoading(false)
+    }).select('id').single()
 
-    if (insertError) {
-      // Esperado até existir um projeto Supabase real com a tabela `projetos`
-      // (ver supabase/migrations/0003_projetos_votos.sql).
-      setError(`Não foi possível salvar: ${insertError.message}`)
+    if (insertError || !criado) {
+      setLoading(false)
+      setError(`Não foi possível salvar: ${insertError?.message ?? 'resposta vazia do servidor'}`)
       return
     }
 
-    navigate('/painel')
+    // Caminho de volta (Tarefa 4.1): o relato recebe a resposta "Virou projeto",
+    // e o autor é notificado pelo gatilho da 0008.
+    let avisoRelato = true
+    if (origemPostId) {
+      avisoRelato = await avisarRelatoQueVirouProjeto({
+        postId: origemPostId,
+        projetoId: criado.id,
+        orgaoId: user.id,
+        nomeProjeto: nome.trim(),
+      })
+    }
+    setLoading(false)
+
+    navigate('/painel', {
+      state: avisoRelato
+        ? null
+        : { aviso: 'Projeto publicado. Não foi possível marcar o relato de origem como "Virou projeto"; responda no relato pelo Feed.' },
+    })
   }
 
   return (
@@ -209,17 +230,16 @@ export default function CriarProjetoPage() {
 
           <div>
             <Label>Relato de origem (opcional)</Label>
-            <Select value={origemPostId} onChange={(e) => setOrigemPostId(e.target.value)}>
-              <option value="">Nenhum</option>
-              {postsOrigem.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.bairro} — {p.descricao.slice(0, 50)}
-                </option>
-              ))}
-            </Select>
-            <p className="text-xs text-grafite-500 mt-1.5">
-              Liga o projeto a um problema relatado no Feed.
+            <p className="-mt-1 mb-2 text-xs text-grafite-500">
+              Liga o projeto a um problema relatado no Feed. O relato passa a mostrar o projeto, e quem relatou é avisado.
             </p>
+            <SeletorRelato
+              relatos={relatos}
+              valor={origemPostId}
+              onMudar={setOrigemPostId}
+              categoria={categoria}
+              erroCarga={erroRelatos}
+            />
           </div>
 
           <div>

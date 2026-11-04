@@ -15,6 +15,8 @@ import Cedula from '../components/Cedula'
 import VerificarComprovante from '../components/VerificarComprovante'
 import LinhaDoTempo from '../components/LinhaDoTempo'
 import BotaoSalvar from '../components/BotaoSalvar'
+import { useAuth } from '../../../context/AuthContext'
+import RelatoOrigem from '../components/RelatoOrigem'
 import {
   CartaoEstimativa,
   ComparadorFotos,
@@ -152,7 +154,7 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
             <Link
               to="/projetos"
               data-hero-chip
-              className="inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25"
+              className="inline-flex w-fit flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25"
             >
               ← Projetos
             </Link>
@@ -182,7 +184,8 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
 
           <h1
             data-titulo-projeto
-            className="mt-5 max-w-5xl font-heading text-5xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.92] tracking-tight"
+            lang="pt-BR"
+            className="mt-5 max-w-5xl font-heading text-[2.5rem] min-[400px]:text-5xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.95] tracking-tight [overflow-wrap:anywhere] [hyphens:auto]"
           >
             {projeto.nome}
           </h1>
@@ -214,27 +217,27 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
             {projeto.descricao}
           </TextoRevelado>
 
-          <dl className="mt-14 grid grid-cols-3 gap-4 border-y border-grafite-200 py-8">
+          <dl className="mt-14 grid grid-cols-3 gap-3 sm:gap-4 border-y border-grafite-200 py-8">
             <div>
-              <dd className="font-heading text-5xl font-extrabold text-grafite-900">
+              <dd className="font-heading text-[2rem] min-[400px]:text-4xl sm:text-5xl font-extrabold text-grafite-900">
                 <Contador valor={marcosCumpridos(projeto)} />
                 <span className="text-grafite-300">/{projeto.timeline.length}</span>
               </dd>
-              <dt className="mt-1 text-sm text-grafite-500">marcos da obra concluídos</dt>
+              <dt className="mt-1 text-xs sm:text-sm text-grafite-500">marcos da obra concluídos</dt>
             </div>
             <div>
-              <dd className="font-heading text-5xl font-extrabold text-grafite-900">
+              <dd className="font-heading text-[2rem] min-[400px]:text-4xl sm:text-5xl font-extrabold text-grafite-900">
                 <Contador valor={etapa + 1} />
                 <span className="text-grafite-300">/{ETAPAS_PUBLICAS.length}</span>
               </dd>
-              <dt className="mt-1 text-sm text-grafite-500">etapa do projeto</dt>
+              <dt className="mt-1 text-xs sm:text-sm text-grafite-500">etapa do projeto</dt>
             </div>
             <div>
-              <dd className="font-heading text-5xl font-extrabold text-amarelo-700">
+              <dd className="font-heading text-[2rem] min-[400px]:text-4xl sm:text-5xl font-extrabold text-amarelo-700">
                 <Contador valor={emConsulta ? (dias ?? 0) : proximo ? (diasProximo ?? 0) : 100} />
                 {!emConsulta && !proximo && <span>%</span>}
               </dd>
-              <dt className="mt-1 text-sm text-grafite-500">
+              <dt className="mt-1 text-xs sm:text-sm text-grafite-500">
                 {emConsulta ? 'dias para votar' : proximo ? 'dias até a próxima etapa' : 'da obra entregue'}
               </dt>
             </div>
@@ -248,7 +251,7 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
 
           <section className="mt-16">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-amarelo-700">Onde está</p>
-            <ol className="mt-5 grid grid-cols-5 gap-2">
+            <ol className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-5">
               {ETAPAS_PUBLICAS.map((e, i) => {
                 const feita = i < etapa || projeto.status === 'concluido'
                 const atual = i === etapa && projeto.status !== 'concluido'
@@ -259,7 +262,8 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08 }}
-                    className={`rounded-2xl px-3 py-4 text-center ${
+                    aria-current={atual ? 'step' : undefined}
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 sm:block sm:px-3 sm:py-4 sm:text-center ${
                       atual
                         ? 'bg-amarelo-500 text-grafite-900 shadow-[0_12px_24px_-12px_rgba(245,184,0,0.9)]'
                         : feita
@@ -268,7 +272,8 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
                     }`}
                   >
                     <span className="block font-heading text-2xl font-extrabold">{i + 1}</span>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.08em]">{e.label}</span>
+                    <span className="text-xs sm:text-[11px] font-bold uppercase tracking-[0.08em]">{e.label}</span>
+                    {atual && <span className="ml-auto text-xs font-semibold sm:hidden">etapa atual</span>}
                   </motion.li>
                 )
               })}
@@ -287,26 +292,10 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
             </div>
           </section>
 
-          {projeto.origem_post_id && (
-            <Link
-              to={`/feed/${projeto.origem_post_id}`}
-              className="group mt-16 flex items-center justify-between gap-6 overflow-hidden rounded-[28px] bg-grafite-100 p-6 transition-colors hover:bg-amarelo-50"
-            >
-              <span>
-                <span className="text-xs font-bold uppercase tracking-[0.14em] text-amarelo-700">De onde veio</span>
-                <span className="mt-1 block font-heading text-2xl font-extrabold text-grafite-900">
-                  Este projeto nasceu de um relato da população
-                </span>
-                <span className="mt-1 block text-sm text-grafite-700">Veja o problema que deu origem a ele no Feed.</span>
-              </span>
-              <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-amarelo-500 text-2xl text-grafite-900 transition-transform group-hover:translate-x-1 group-hover:-rotate-12">
-                →
-              </span>
-            </Link>
-          )}
+          {projeto.origem_post_id && <RelatoOrigem postId={projeto.origem_post_id} />}
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside id="votar" className="scroll-mt-20 lg:sticky lg:top-24 lg:self-start">
           {emConsulta ? (
             <>
               <Cedula projeto={projeto} agora={agora} />
@@ -333,6 +322,44 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
           )}
         </aside>
       </div>
+
+      {/* No celular a cédula fica no fim da página, depois de todo o conteúdo:
+          um atalho fixo leva direto a ela enquanto a consulta está aberta. */}
+      {emConsulta && <AtalhoVotar />}
     </div>
+  )
+}
+
+function AtalhoVotar() {
+  const [visivel, setVisivel] = useState(true)
+  // Logado, o botão flutuante de relatar ocupa o canto direito: a barra para antes dele.
+  const { user } = useAuth()
+
+  useEffect(() => {
+    const cedula = document.getElementById('votar')
+    if (!cedula || !('IntersectionObserver' in window)) return
+    // Some quando a própria cédula já está na tela.
+    const obs = new IntersectionObserver(([e]) => setVisivel(!e.isIntersecting), { threshold: 0.15 })
+    obs.observe(cedula)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <motion.a
+      href="#votar"
+      onClick={(e) => {
+        e.preventDefault()
+        document.getElementById('votar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }}
+      initial={false}
+      animate={visivel ? { y: 0, opacity: 1 } : { y: 90, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+      aria-hidden={!visivel}
+      tabIndex={visivel ? 0 : -1}
+      className={`fixed bottom-5 left-4 z-40 flex ${user ? 'right-[5.75rem]' : 'right-4'} items-center justify-between gap-3 rounded-full bg-grafite-900 py-2 pl-5 pr-2 text-sm font-bold text-white shadow-[0_18px_40px_-14px_rgba(27,24,19,0.7)] lg:hidden`}
+    >
+      <span className="truncate">Consulta pública aberta</span>
+      <span className="flex-shrink-0 rounded-full bg-amarelo-500 px-4 py-2 text-grafite-900">Votar ↓</span>
+    </motion.a>
   )
 }

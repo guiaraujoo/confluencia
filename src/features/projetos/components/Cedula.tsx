@@ -139,7 +139,7 @@ export default function Cedula({ projeto, agora }: { projeto: Projeto; agora: nu
           />
         </div>
         <p className="mt-2 text-xs text-grafite-500">
-          {total === 0 ? 'Nenhum voto ainda — seja o primeiro.' : `${total} ${total === 1 ? 'voto' : 'votos'} no total`}
+          {total === 0 ? 'Nenhum voto ainda — seja o primeiro.' : `${total.toLocaleString('pt-BR')} ${total === 1 ? 'voto' : 'votos'} no total`}
         </p>
 
         <div className="mt-6">
@@ -258,7 +258,7 @@ export default function Cedula({ projeto, agora }: { projeto: Projeto; agora: nu
 
         <p className="mt-6 border-t border-grafite-200 pt-4 text-xs text-grafite-500">
           Voto secreto e consultivo: ninguém vê sua escolha, nem o órgão. O resultado orienta a decisão, mas não a
-          obriga.
+          obriga. Nesta versão, cada conta vota uma vez; ainda não há verificação de identidade por CPF ou gov.br.
         </p>
       </div>
     </div>

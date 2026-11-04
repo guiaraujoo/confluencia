@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { buscarResultados, listarProjetosDoOrgao } from '../api'
 import { isSupabaseConfigured } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import { MOCK_ORGAO_ID } from '../mock'
+import { relatoTemPagina } from '../origem'
 import { hojeIso, situacaoDoMarco } from '../timeline'
 import { Button, Card } from '../../../components/ui'
 import StatusBadge from '../../../components/StatusBadge'
@@ -32,7 +33,11 @@ export default function PainelGestorPage() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [editando, setEditando] = useState<string | null>(null)
-  const [aviso, setAviso] = useState<string | null>(null)
+  // Aviso que pode chegar do formulário de criar projeto (ex.: relato de origem não marcado).
+  const location = useLocation()
+  const [aviso, setAviso] = useState<string | null>(
+    () => (location.state as { aviso?: string } | null)?.aviso ?? null,
+  )
 
   useEffect(() => {
     if (!orgaoId) return
@@ -64,7 +69,7 @@ export default function PainelGestorPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold text-grafite-900">Painel de gestor</h1>
           <p className="text-sm text-grafite-500">
@@ -73,7 +78,7 @@ export default function PainelGestorPage() {
         </div>
         <Link
           to="/projetos/novo"
-          className="rounded-[var(--radius-field)] bg-amarelo-500 px-5 py-2.5 text-sm font-semibold text-grafite-900 hover:bg-amarelo-300 transition-colors"
+          className="self-start whitespace-nowrap rounded-[var(--radius-field)] bg-amarelo-500 px-5 py-2.5 text-sm font-semibold text-grafite-900 hover:bg-amarelo-300 transition-colors"
         >
           + Novo projeto
         </Link>
@@ -155,8 +160,24 @@ export default function PainelGestorPage() {
                             {atrasados > 0 &&
                               ` · ${atrasados} ${atrasados === 1 ? 'marco atrasado' : 'marcos atrasados'}`}
                           </p>
+                          {p.origem_post_id && (
+                            <p className="mt-1 text-xs text-grafite-500">
+                              Nasceu de um relato do Feed
+                              {relatoTemPagina(p.origem_post_id) && (
+                                <>
+                                  {' · '}
+                                  <Link
+                                    to={`/feed/${p.origem_post_id}`}
+                                    className="font-semibold text-amarelo-700 hover:underline"
+                                  >
+                                    ver relato
+                                  </Link>
+                                </>
+                              )}
+                            </p>
+                          )}
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                           <StatusBadge status={p.status} />
                           <Button
                             variant="secondary"

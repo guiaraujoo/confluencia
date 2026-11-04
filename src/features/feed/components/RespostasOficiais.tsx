@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
@@ -118,6 +119,14 @@ export default function RespostasOficiais({ postId }: { postId: string }) {
                   </span>
                 </div>
                 <p className="mt-4 text-[15px] leading-relaxed text-grafite-900">{r.texto}</p>
+                {r.projeto_id && (
+                  <Link
+                    to={`/projetos/${r.projeto_id}`}
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-status-verde-700 hover:underline"
+                  >
+                    Ver o projeto →
+                  </Link>
+                )}
               </motion.li>
             )
           })}

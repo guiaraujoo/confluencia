@@ -14,7 +14,7 @@ const STATUS_STYLES: Record<ProjetoStatus, string> = {
 export default function StatusBadge({ status }: { status: ProjetoStatus }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[status]}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[status]}`}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {STATUS_LABELS[status]}
