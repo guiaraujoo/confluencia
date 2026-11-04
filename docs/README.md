@@ -60,6 +60,6 @@
 | 25 e 26/10 | Semana 3: votação com hash no servidor (Guilherme) e módulo Projetos completo (Ana) | `0006_votacao.sql` · [PR #9](https://github.com/joaobatis1a/confluencia/pull/9) |
 | 28/10 | Integração da Semana 3 com a repaginada (visual novo, landing, camada social) | [PR #10](https://github.com/joaobatis1a/confluencia/pull/10) |
 | 29/10 | Documentação completa; clusters no mapa novo | [PR #11](https://github.com/joaobatis1a/confluencia/pull/11) · [PR #12](https://github.com/joaobatis1a/confluencia/pull/12) |
-| 1ª semana de dezembro | Apresentação (adiada de 05/11; data exata a confirmar) | |
+| 1ª semana de dezembro | Apresentação (data exata a confirmar) | |
 
 Os guias individuais de cada semana (PDF) ficam fora do repositório, nos documentos de planejamento do time.

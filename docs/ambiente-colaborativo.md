@@ -54,7 +54,7 @@ npm run dev
 
 ## Ritmo
 
-- **Cronograma:** 4 semanas de desenvolvimento (07/10 a 01/11), apresentação na primeira semana de dezembro (adiada; antes era 05/11, com 3 dias de folga de 02 a 04/11). Detalhes em [Cronograma](cronograma-atualizado.md).
+- **Cronograma:** 4 semanas de desenvolvimento (07/10 a 01/11), folga a partir de 02/11 e apresentação na primeira semana de dezembro. Detalhes em [Cronograma](cronograma-atualizado.md).
 - **Checagem de quarta-feira:** "está tudo dentro do previsto ou tem algo travado?" no grupo.
 - **Guia da semana:** cada pessoa recebe um PDF com tarefas, dependências, tempo estimado e passo a passo. Quando a base muda (como na repaginada), o guia é refeito apontando para os arquivos novos, sem aumentar o escopo de ninguém.
 

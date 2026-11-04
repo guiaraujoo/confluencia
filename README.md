@@ -128,7 +128,7 @@ docs/                  documentação
 | Ana Beatriz | Frontend de Projetos, apoio ao banco | [@anabeatrizlsf](https://github.com/anabeatrizlsf) |
 | Guilherme Araújo | Backend, autenticação, votação, deploy | [@guiaraujoo](https://github.com/guiaraujoo) |
 
-Quatro semanas de desenvolvimento (07/10 a 01/11) e apresentação na primeira semana de dezembro (adiada; antes era 05/11) ([cronograma](docs/cronograma-atualizado.md)). A `main` é protegida: tudo entra por PR revisado ([ambiente colaborativo](docs/ambiente-colaborativo.md)).
+Quatro semanas de desenvolvimento (07/10 a 01/11) e apresentação na primeira semana de dezembro ([cronograma](docs/cronograma-atualizado.md)). A `main` é protegida: tudo entra por PR revisado ([ambiente colaborativo](docs/ambiente-colaborativo.md)).
 
 ## Licença
 

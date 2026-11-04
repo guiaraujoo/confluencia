@@ -1,8 +1,8 @@
 # Confluência — Cronograma Atualizado
 
-**Gerado em:** 07/10/2026 · **Apresentação:** 05/11/2026 (quinta-feira) · **Dias disponíveis:** 29
+**Gerado em:** 07/10/2026 · **Atualizado em:** 29/10/2026 · **Apresentação:** primeira semana de dezembro de 2026 (data exata a confirmar)
 
-> **Atualização de 29/10:** a apresentação foi adiada para a **primeira semana de dezembro de 2026** (data exata a confirmar). O cronograma abaixo é o plano original de outubro, mantido como registro: as 4 semanas de desenvolvimento não mudam, e o tempo a mais até dezembro vira folga para testes, correções e ensaio.
+> **Atualização de 29/10:** a apresentação passou para a **primeira semana de dezembro de 2026**. As 4 semanas de desenvolvimento continuam as mesmas; o período de folga agora vai de 02/11 até a apresentação.
 
 ## Atualização de 08/10 — Semana 1 adiantada e já mesclada na main
 
@@ -16,7 +16,7 @@ Boa parte da Semana 1 (e um adiantamento da Semana 2) já foi implementada, revi
 
 O plano original previa 6 semanas de trabalho com 2 semanas de margem (8 semanas reais). Até hoje (07/10), o repositório ainda estava vazio — nenhum código commitado — então, na prática, o time está no dia zero da implementação, mesmo com os documentos de planejamento prontos desde o início de setembro.
 
-Com a apresentação marcada para **05/11**, restam 29 dias corridos. Este cronograma comprime as 6 semanas originais em **4 semanas de desenvolvimento**, mantendo o mesmo escopo do MVP (nada foi cortado do que está no Escopo Geral), e reserva **3 dias de buffer fixo** antes da apresentação para polimento, ensaio e imprevistos — em vez de só descobrir um atraso no último dia.
+Este cronograma comprime as 6 semanas originais em **4 semanas de desenvolvimento**, mantendo o mesmo escopo do MVP (nada foi cortado do que está no Escopo Geral), e reserva um **período de folga** antes da apresentação para polimento, ensaio e imprevistos — em vez de só descobrir um atraso no último dia.
 
 Isso só é viável porque o design system (etapa que consumia os primeiros dias do plano original) **já está pronto** (`confluencia-design.pdf` v2.1), e porque o scaffold técnico do projeto (Vite + React + TypeScript + Tailwind v4 com os tokens do design system já aplicados, Supabase e Leaflet instalados) foi preparado hoje, eliminando a tarefa de setup inicial que cada pessoa teria que fazer sozinha.
 
@@ -30,8 +30,8 @@ Isso só é viável porque o design system (etapa que consumia os primeiros dias
 | 2 | 13/10 (ter) – 19/10 (seg) | Feed completo + estruturas base de Projetos |
 | 3 | 20/10 (ter) – 26/10 (seg) | Projetos completo: votação, hash, verificação institucional |
 | 4 | 27/10 (ter) – 01/11 (dom) | Integração Feed↔Projetos, simulação visual, polimento, deploy |
-| Buffer | 02/11 (seg) – 04/11 (qua) | Correção de bugs, documentação, ensaio da apresentação |
-| — | **05/11 (qui)** | **APRESENTAÇÃO** |
+| Folga | 02/11 (seg) até a apresentação | Correção de bugs, documentação, ensaio da apresentação |
+| — | **Primeira semana de dezembro de 2026** | **APRESENTAÇÃO** (data exata a confirmar) |
 
 ## Checagem de meio de semana
 
@@ -68,7 +68,7 @@ Mantida do Guia do Líder original: toda **quarta-feira**, pergunta objetiva ao 
 - **Guilherme:** testes de integração ponta a ponta; correção de bugs cruzados; revisão de segurança (RLS); backup do banco; **deploy em produção (Vercel + Supabase)**; documentação básica de uso.
 - **Entrega:** sistema completo, integrado, responsivo, testado e **no ar**.
 
-### Buffer — 02/11 a 04/11
+### Folga: de 02/11 até a apresentação
 
 - Correção de bugs encontrados em testes finais com "olhos de fora" (cada um testa o módulo dos outros).
 - Revisão de que nada promete mais do que o sistema entrega (ex: deixar claro que a simulação é ilustrativa, não preditiva; que a votação ainda não usa CPF/gov.br).
