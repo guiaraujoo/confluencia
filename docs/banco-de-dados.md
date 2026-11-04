@@ -16,6 +16,7 @@ Postgres no Supabase. Todo o esquema está em `supabase/migrations/`, em arquivo
 | `0008_rede_social.sql` | Perfil público, relato anônimo, comentários, respostas oficiais, bairros seguidos, notificações; nova `posts_repercussao` | João (repaginada) |
 | `0009_fechar_autor.sql` | Fecha a coluna do autor na tabela `posts` (o anonimato passa a valer no banco) | João (repaginada) |
 | `0010_seguranca_desempenho.sql` | Remove `registrar_voto`; `comprovantes_publicos` sem rejeitados; resposta oficial só com projeto do próprio órgão; `search_path` em `handle_new_user`; índices | Guilherme 4.2/4.3 |
+| `0011_origem_e_comprovantes.sql` | Relato apagado não trava mais por causa do projeto (`on delete set null` em `origem_post_id`); índices para "relato virou projeto?" e para a listagem; `verificar_comprovante` usando índice | Ana 4.1/4.2 |
 
 Dados de exemplo (opcionais, depois das migrations): `seed_repercussao.sql`, `seed_projetos.sql`, `seed-social-demo.sql` e `seed-teste-2.2.sql`. Tudo que é de teste tem o prefixo `[SEED]` no nome ou na descrição.
 
@@ -26,6 +27,7 @@ Conferido em 29/10/2026 consultando a API do Supabase com a chave pública:
 | Migration | Situação |
 |---|---|
 | 0001 a 0010 | Aplicadas em 30/10/2026, na ordem de [`supabase/README.md`](../supabase/README.md#banco-que-já-tem-0001-a-0006-produção-em-2910), com `seed-social-demo.sql` e `seed_projetos.sql` |
+| 0011 | **Falta aplicar** (Semana 4 da Ana, entrou depois). Pode rodar mais de uma vez |
 | Auth | Cadastro fechado (`disable_signup: true`); as duas contas demo entram |
 
 Conferido depois de aplicar: o Feed lê 14 relatos pela `posts_repercussao` (2 com resposta oficial), o gestor demo é verificado e tem os 3 projetos `[SEED]` no painel, a Av. Boa Viagem está em consulta até 20/12, e o `npm run test:rls` dá 24 bloqueados e 0 furos.

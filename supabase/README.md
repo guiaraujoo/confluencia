@@ -27,6 +27,9 @@ npx supabase db push
 | `0008_rede_social.sql` | camada social do Feed: apelido/bairro/bio no perfil, relato anônimo, `comentarios`, `respostas_oficiais`, `bairros_seguidos`, `notificacoes` | João (repaginada) |
 | `0009_fechar_autor.sql` | fecha a leitura do autor em `posts` (o anonimato passa a valer no banco). Rode por último, quando o app já estiver lendo pela view `posts_repercussao` | João (repaginada) |
 | `0010_seguranca_desempenho.sql` | remove `registrar_voto` (fica só `votar`), tira projetos rejeitados de `comprovantes_publicos`, resposta oficial só com projeto do próprio órgão, `search_path` fixo em `handle_new_user`, índices da `posts_repercussao`, do painel do gestor e do perfil | Guilherme 4.2/4.3 |
+| `0011_origem_e_comprovantes.sql` | `origem_post_id` com `on delete set null` (apagar um relato que virou projeto não dá mais erro), índices para "relato virou projeto?" e para a listagem, `verificar_comprovante` usando índice. Rode depois da 0010 | Ana 4.1/4.2 |
+
+**Testar as migrations sem tocar no Supabase:** `supabase/testes/testar-migrations.mjs` aplica 0001 → 0011 num Postgres em memória (PGlite) e confere os cenários da Semana 4. Veja o cabeçalho do arquivo.
 
 **Dados de exemplo (rode depois das migrations):** `seed-social-demo.sql` (perfis das contas demo, promove o gestor demo a verificado, comentários e respostas oficiais) e depois `seed_projetos.sql` (projetos `[SEED]` do gestor demo, com a Av. Boa Viagem em consulta até 20/12). Os dois são idempotentes.
 
@@ -40,7 +43,8 @@ Depois de aplicar, copie a **Project URL** e a **anon public key** (Project Sett
 4. `seed_projetos.sql`
 5. `0009_fechar_autor.sql` (o app no ar já lê pela view; confira o Feed carregando)
 6. `0010_seguranca_desempenho.sql`
-7. Authentication → Sign In / Providers → desligue **Allow new users to sign up**. O botão "Criar conta" do app já está desativado, mas sem isso a API continua aceitando cadastro com a chave pública. As contas demo continuam entrando.
+7. `0011_origem_e_comprovantes.sql` (entrou depois, com a Semana 4 da Ana)
+8. Authentication → Sign In / Providers → desligue **Allow new users to sign up**. O botão "Criar conta" do app já está desativado, mas sem isso a API continua aceitando cadastro com a chave pública. As contas demo continuam entrando.
 
 Essa sequência foi ensaiada do zero num Postgres local (PGlite) partindo do estado de produção: tudo aplica, e a 0010 e os seeds podem rodar de novo.
 

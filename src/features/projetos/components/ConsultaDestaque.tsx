@@ -65,7 +65,7 @@ export default function ConsultaDestaque({ projeto, resultado, agora, indice }: 
             <div className="flex justify-between text-xs font-semibold text-amarelo-900">
               <span>{total === 0 ? 'Nenhum voto ainda' : `${pctFavor}% a favor`}</span>
               <span>
-                {total} {total === 1 ? 'voto' : 'votos'}
+                {total.toLocaleString('pt-BR')} {total === 1 ? 'voto' : 'votos'}
               </span>
             </div>
             <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-grafite-900/15">

@@ -35,6 +35,7 @@ Escopo combinado no início do projeto (guias individuais) e o que cada pessoa e
 | Telas de Projetos, `StatusDestaque` com trilho de etapas, votação na consulta, formulário de criar projeto, painel com contadores, página de perfil, rotas na barra (Tarefas 2.1, 2.3, 2.4) | [PR #3](https://github.com/joaobatis1a/confluencia/pull/3), 8 commits |
 | Modo demonstração sem Supabase, revisão da 0003 e seed de teste (Tarefas 2.2 e 2.3). Feito pela Ana e enviado em arquivo; o João só fez o commit | [PR #7](https://github.com/joaobatis1a/confluencia/pull/7) |
 | Semana 3 completa: `api.ts` (todas as consultas, real e mock), `timeline.ts` (atraso por marco), painel do gestor com rejeitados e "publicar atualização", tela de projeto com voto confirmado e "já votou", verificação de comprovante, migration `0007_votacao_projetos.sql` (Tarefas 3.1 a 3.3) | [PR #9](https://github.com/joaobatis1a/confluencia/pull/9), commit `cdfbaea` |
+| Semana 4: Feed ↔ Projetos pelo campo origem nos dois sentidos, migration `0011_origem_e_comprovantes.sql` (bug do relato que não podia ser apagado, índices, verificação de comprovante mais rápida), teste das migrations em Postgres, responsividade de Projetos (Tarefas 4.1 a 4.3) | Branch `feature/feed-projetos-origem`, [Semana 4 da Ana](semana-4-ana.md) |
 
 Na revisão da Semana 3 foi encontrado um curinga do `LIKE` em `verificar_comprovante`; o ajuste (aceitar só hexadecimal) entrou na integração do PR #10.
 

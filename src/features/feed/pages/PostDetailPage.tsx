@@ -13,6 +13,7 @@ import AnelRepercussao from '../components/AnelRepercussao'
 import ComparadorSimulacao from '../components/ComparadorSimulacao'
 import RespostasOficiais from '../components/RespostasOficiais'
 import Comentarios from '../components/Comentarios'
+import ProjetosDoRelato from '../../projetos/components/ProjetosDoRelato'
 import { Avatar, SeloOrgao } from '../components/Autor'
 import { nomePublico, usePerfis } from '../perfis'
 import { CATEGORIA_RGB, rgb } from '../cores'
@@ -164,6 +165,9 @@ function RelatoDetalhe({ post, onAtualizar }: { post: PostRepercussao; onAtualiz
           />
 
           <RespostasOficiais postId={post.id} />
+
+          {/* Tarefa 4.1 da Ana: se este relato já virou projeto, mostra qual. */}
+          <ProjetosDoRelato postId={post.id} />
 
           <section className="mt-20">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-amarelo-700">Repercussão</p>
