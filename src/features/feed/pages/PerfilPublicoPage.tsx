@@ -20,8 +20,8 @@ import { Avatar, SeloOrgao } from '../components/Autor'
 import IconeCategoria from '../components/IconeCategoria'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import { useProjetosSalvos } from '../../projetos/useProjetosSalvos'
-import { MOCK_PROJETOS } from '../../projetos/mock'
-import { FOTOS_PROJETO } from '../../projetos/fotos'
+import { useProjetosPublicos } from '../../projetos/vitrine'
+import { fotoDoProjeto } from '../../projetos/fotos'
 import CampoBairro from '../../../components/CampoBairro'
 import { bairroOficial } from '../../../lib/bairros'
 import { ETAPAS_PUBLICAS, indiceEtapa, proximoMarco } from '../../projetos/etapas'
@@ -59,6 +59,7 @@ export default function PerfilPublicoPage() {
   const [versao, setVersao] = useState(0)
   const [ola] = useState(saudacao)
   const { salvos } = useProjetosSalvos()
+  const todosProjetos = useProjetosPublicos()
   const meu = Boolean(user && user.id === id)
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function PerfilPublicoPage() {
   const apoios = relatos.reduce((s, r) => s + r.interacoes, 0)
   const comentarios = relatos.reduce((s, r) => s + (r.comentarios ?? 0), 0)
   const mudaram = relatos.filter((r) => r.status_oficial === 'virou_projeto' || r.status_oficial === 'resolvido').length
-  const acompanhados = MOCK_PROJETOS.filter((p) => salvos.includes(p.id))
+  const acompanhados = todosProjetos.filter((p) => salvos.includes(p.id))
   const selos = [
     orgao && { texto: 'Órgão verificado', cor: 'bg-status-azul-50 text-status-azul-700' },
     relatos.length >= 3 && { texto: 'Vizinho ativo', cor: 'bg-amarelo-100 text-amarelo-900' },
@@ -484,7 +485,7 @@ function ListaRespostas({ respostas }: { respostas: RespostaOficial[] }) {
 // Projetos salvos: foto do lugar, etapa atual no trilho e o próximo marco.
 function ListaAcompanhando() {
   const { salvos, alternar } = useProjetosSalvos()
-  const projetos = MOCK_PROJETOS.filter((p) => salvos.includes(p.id))
+  const projetos = useProjetosPublicos().filter((p) => salvos.includes(p.id))
   if (projetos.length === 0) {
     return (
       <Vazio
@@ -498,7 +499,7 @@ function ListaAcompanhando() {
     <ul className="grid gap-6 sm:grid-cols-2">
       <AnimatePresence mode="popLayout">
         {projetos.map((p) => {
-          const foto = FOTOS_PROJETO[p.id]
+          const foto = fotoDoProjeto(p.id)
           const etapa = indiceEtapa(p.status)
           const marco = proximoMarco(p)
           return (

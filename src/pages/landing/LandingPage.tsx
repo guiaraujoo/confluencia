@@ -7,7 +7,7 @@ import { SplitText } from 'gsap/SplitText'
 import { useGSAP } from '@gsap/react'
 import { supabase } from '../../lib/supabase'
 import Contador from '../../components/Contador'
-import { MOCK_PROJETOS } from '../../features/projetos/mock'
+import { useProjetosPublicos } from '../../features/projetos/vitrine'
 import { FOTOS_PROJETO } from '../../features/projetos/fotos'
 import { CONTEUDO_PROJETO } from '../../features/projetos/conteudo'
 import type { Categoria } from '../../types/database'
@@ -177,7 +177,7 @@ const SECOES = [
 
 // Números ao vivo, enormes, cada um com sua frase em serifa.
 function Numeros({ totais, carregou }: { totais: { relatos: number; apoios: number; bairros: number }; carregou: boolean }) {
-  const projetos = MOCK_PROJETOS.filter((p) => p.status !== 'rejeitado').length
+  const projetos = useProjetosPublicos().length
   const itens = [
     { valor: totais.relatos, rotulo: 'relatos', frase: 'apontados no mapa' },
     { valor: totais.apoios, rotulo: 'apoios', frase: 'de vizinhos que concordam' },

@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { EXEMPLO_ID, apelidoExemplo } from './mock'
 
 // Projetos que a pessoa salvou para acompanhar. Provisório: fica no
 // navegador (por conta), até existir uma tabela de "projetos seguidos" no
@@ -11,7 +12,9 @@ const chave = (userId: string | undefined) => `confluencia:salvos:${userId ?? 'v
 function ler(k: string): string[] {
   try {
     const bruto = localStorage.getItem(k)
-    return bruto ? (JSON.parse(bruto) as string[]) : []
+    const lista = bruto ? (JSON.parse(bruto) as string[]) : []
+    // Salvos de antes da Semana 5 guardavam "p1"; hoje o exemplo tem id fixo.
+    return lista.map((id) => (id in EXEMPLO_ID ? EXEMPLO_ID[apelidoExemplo(id)!] : id))
   } catch {
     return []
   }

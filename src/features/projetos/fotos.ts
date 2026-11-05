@@ -1,3 +1,4 @@
+import { apelidoExemplo } from './mock'
 // Fotos dos locais dos projetos de exemplo — Wikimedia Commons, licenças livres,
 // com crédito exibido na tela. Provisório: quando `projetos` tiver uma coluna
 // de foto no banco, este mapa sai e a foto vem do próprio projeto.
@@ -9,7 +10,7 @@ export interface FotoLocal {
   fonte: string
 }
 
-export const FOTOS_PROJETO: Record<string, FotoLocal> = {
+export const FOTOS_PROJETO: Record<'p1' | 'p2' | 'p4' | 'p5' | 'p6', FotoLocal> = {
   p1: {
     url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Avenida-norte-1.jpg/1280px-Avenida-norte-1.jpg',
     local: 'Av. Norte · Recife',
@@ -45,4 +46,10 @@ export const FOTOS_PROJETO: Record<string, FotoLocal> = {
     licenca: 'CC0',
     fonte: 'https://commons.wikimedia.org/wiki/File:Rio_Capibaribe_no_Recife_02.jpg',
   },
+}
+
+/** Foto de um projeto da vitrine pelo id (do banco ou do mock). */
+export function fotoDoProjeto(id: string): FotoLocal | undefined {
+  const apelido = apelidoExemplo(id)
+  return apelido && apelido in FOTOS_PROJETO ? FOTOS_PROJETO[apelido as keyof typeof FOTOS_PROJETO] : undefined
 }

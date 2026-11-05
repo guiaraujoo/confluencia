@@ -24,8 +24,8 @@ import {
   SecaoProposta,
   VideosAntesDepois,
 } from '../components/SecoesProjeto'
-import { CONTEUDO_PROJETO } from '../conteudo'
-import { FOTOS_PROJETO } from '../fotos'
+import { conteudoDoProjeto } from '../conteudo'
+import { fotoDoProjeto } from '../fotos'
 import { ETAPAS_PUBLICAS, dataLocal, diasRestantes, indiceEtapa, marcosCumpridos, proximoMarco } from '../etapas'
 import { CATEGORIAS, STATUS_LABELS, type Projeto } from '../../../types/database'
 
@@ -81,7 +81,7 @@ export default function ProjetoDetailPage() {
 
 function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
   const [agora] = useState(() => Date.now())
-  const foto = FOTOS_PROJETO[projeto.id]
+  const foto = fotoDoProjeto(projeto.id)
   const [r, g, b] = CATEGORIA_RGB[projeto.categoria]
   const categoria = CATEGORIAS.find((c) => c.value === projeto.categoria)?.label ?? projeto.categoria
   const etapa = indiceEtapa(projeto.status)
@@ -91,7 +91,7 @@ function ProjetoDetalhe({ projeto }: { projeto: Projeto }) {
     ? Math.max(0, Math.ceil((dataLocal(proximo.data_prevista).getTime() - agora) / DIA_MS))
     : null
   const emConsulta = projeto.status === 'em_consulta'
-  const conteudo = CONTEUDO_PROJETO[projeto.id]
+  const conteudo = conteudoDoProjeto(projeto.id)
 
   // --- Hero com profundidade: a foto desce mais devagar que a página.
   const hero = useRef<HTMLElement>(null)
