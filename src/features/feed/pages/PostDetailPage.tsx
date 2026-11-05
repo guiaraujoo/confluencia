@@ -18,6 +18,7 @@ import { Avatar, SeloOrgao } from '../components/Autor'
 import { nomePublico, usePerfis } from '../perfis'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import { formatRelativo, nivelRepercussao, REPERCUSSAO_STYLES } from '../../../lib/repercussao'
+import CapaRelato from '../components/CapaRelato'
 import { CATEGORIAS, type PerfilPublico, type PostRepercussao } from '../../../types/database'
 
 gsap.registerPlugin(useGSAP, SplitText)
@@ -155,6 +156,7 @@ function RelatoDetalhe({ post, onAtualizar }: { post: PostRepercussao; onAtualiz
 
       <div className="mx-auto grid max-w-7xl gap-16 px-5 sm:px-8 py-16 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0">
+          <CapaRelato fotoUrl={post.foto_url} bairro={post.bairro} className="mb-14 h-64 rounded-[28px] sm:h-80" />
           <Citacao
             texto={post.descricao}
             bairro={post.bairro}

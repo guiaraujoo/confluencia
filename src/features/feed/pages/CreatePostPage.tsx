@@ -6,6 +6,8 @@ import { useAuth } from '../../../context/AuthContext'
 import { dentroDoRecife } from '../../../lib/recife'
 import { bairroOficial } from '../../../lib/bairros'
 import CampoBairro from '../../../components/CampoBairro'
+import CampoFoto from '../../../components/CampoFoto'
+import { enviarFoto } from '../../../lib/fotos'
 import { CATEGORIAS, type Categoria, type PostRepercussao } from '../../../types/database'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import IconeCategoria from '../components/IconeCategoria'
@@ -59,6 +61,8 @@ export default function CreatePostPage() {
   const [buscandoBairro, setBuscandoBairro] = useState(false)
   const [descricao, setDescricao] = useState('')
   const [anonimo, setAnonimo] = useState(false)
+  const [foto, setFoto] = useState<File | null>(null)
+  const [fotoPrevia, setFotoPrevia] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [publicando, setPublicando] = useState(false)
   const [publicado, setPublicado] = useState(false)
@@ -122,6 +126,16 @@ export default function CreatePostPage() {
     if (!user || !categoria || !coords) return
     setPublicando(true)
     setErro(null)
+    let fotoUrl: string | null = null
+    if (foto) {
+      try {
+        fotoUrl = await enviarFoto(foto, 'relato', user.id)
+      } catch (e) {
+        setPublicando(false)
+        setErro(e instanceof Error ? e.message : 'Não foi possível enviar a foto.')
+        return
+      }
+    }
     const relato = {
       user_id: user.id,
       categoria,
@@ -129,6 +143,7 @@ export default function CreatePostPage() {
       descricao: descricao.trim(),
       latitude: coords[0],
       longitude: coords[1],
+      foto_url: fotoUrl,
     }
     let { data, error } = await supabase.from('posts').insert({ ...relato, anonimo: anonimoEfetivo }).select('id').single()
     // Banco ainda sem a 0008 (sem a coluna `anonimo`): publica sem o campo.
@@ -166,7 +181,7 @@ export default function CreatePostPage() {
     categoria: categoria ?? 'outros',
     bairro: bairro || 'Seu bairro',
     descricao: descricao || 'Sua descrição aparece aqui.',
-    foto_url: null,
+    foto_url: fotoPrevia,
     latitude: coords?.[0] ?? 0,
     longitude: coords?.[1] ?? 0,
     created_at: new Date().toISOString(),
@@ -349,6 +364,20 @@ export default function CreatePostPage() {
                         </span>
                       </div>
                     </div>
+
+                    <CampoFoto
+                      className="mt-5"
+                      previa={fotoPrevia}
+                      rotulo="Foto do problema"
+                      dica="Opcional. Sem foto, o card mostra uma foto da região do bairro."
+                      onEscolher={(arquivo) => {
+                        setFoto(arquivo)
+                        setFotoPrevia((antiga) => {
+                          if (antiga) URL.revokeObjectURL(antiga)
+                          return arquivo ? URL.createObjectURL(arquivo) : null
+                        })
+                      }}
+                    />
 
                     <div
                       className={`mt-5 flex items-start gap-4 rounded-[24px] border p-4 transition-colors ${

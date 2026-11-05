@@ -3,18 +3,28 @@ import { supabase } from '../../lib/supabase'
 import type { PerfilPublico } from '../../types/database'
 
 const COMPLETO = 'id, nome, apelido, bairro, bio, institucional_verificado, orgao_nome, created_at'
+// Com as fotos (0015). Enquanto a migration não roda, cai para o COMPLETO.
+const COM_FOTOS = `${COMPLETO}, avatar_url, capa_url`
 // Antes da 0008 os campos do perfil público não existem: cai para o básico.
 const BASICO = 'id, nome, institucional_verificado, orgao_nome, created_at'
+
+const NIVEIS = [COM_FOTOS, COMPLETO, BASICO]
+let nivel = 0
 
 const cache = new Map<string, PerfilPublico>()
 
 export async function buscarPerfis(ids: string[]): Promise<Map<string, PerfilPublico>> {
   const faltando = [...new Set(ids)].filter((id) => !cache.has(id))
   if (faltando.length > 0) {
-    const completo = await supabase.from('profiles').select(COMPLETO).in('id', faltando)
-    const linhas = completo.error
-      ? (await supabase.from('profiles').select(BASICO).in('id', faltando)).data
-      : completo.data
+    let linhas: unknown[] | null = null
+    for (const colunas of NIVEIS.slice(nivel)) {
+      const r = await supabase.from('profiles').select(colunas).in('id', faltando)
+      if (!r.error) {
+        linhas = r.data
+        break
+      }
+      nivel++ // lembra: não tenta de novo as colunas que o banco ainda não tem
+    }
     for (const p of (linhas ?? []) as Partial<PerfilPublico>[]) {
       cache.set(p.id!, {
         id: p.id!,
@@ -25,6 +35,8 @@ export async function buscarPerfis(ids: string[]): Promise<Map<string, PerfilPub
         institucional_verificado: Boolean(p.institucional_verificado),
         orgao_nome: p.orgao_nome ?? null,
         created_at: p.created_at,
+        avatar_url: p.avatar_url ?? null,
+        capa_url: p.capa_url ?? null,
       })
     }
   }
