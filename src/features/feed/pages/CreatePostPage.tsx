@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
-import { isWithinRecifeMetro } from '../../../lib/regiao'
+import { dentroDoRecife } from '../../../lib/recife'
 import { CATEGORIAS, type Categoria, type PostRepercussao } from '../../../types/database'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import IconeCategoria from '../components/IconeCategoria'
@@ -64,7 +64,7 @@ export default function CreatePostPage() {
   const anonimoForcado = categoria === 'seguranca'
   const anonimoEfetivo = anonimo || anonimoForcado
   const cor = categoria ? rgb(CATEGORIA_RGB[categoria]) : 'var(--color-amarelo-500)'
-  const foraDaRmr = coords !== null && !isWithinRecifeMetro(coords)
+  const foraDoRecife = coords !== null && !dentroDoRecife(coords)
 
   // Preenche o bairro sozinho a partir do ponto (se a pessoa não digitou um).
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function CreatePostPage() {
 
   const podeAvancar = [
     categoria !== null,
-    coords !== null && !foraDaRmr && bairro.trim().length > 1,
+    coords !== null && !foraDoRecife && bairro.trim().length > 1,
     descricao.trim().length >= 10,
     true,
   ][passo]
@@ -102,7 +102,15 @@ export default function CreatePostPage() {
       return
     }
     navigator.geolocation.getCurrentPosition(
-      (p) => setCoords([p.coords.latitude, p.coords.longitude]),
+      (p) => {
+        const aqui: [number, number] = [p.coords.latitude, p.coords.longitude]
+        // No computador a posição vem estimada pela internet e pode errar por
+        // milhares de quilômetros: fora da cidade, o mapa não sai do lugar.
+        if (dentroDoRecife(aqui)) {
+          setErro(null)
+          setCoords(aqui)
+        } else setErro('Sua localização aparece fora da cidade do Recife. Toque no mapa, dentro da linha amarela.')
+      },
       () => setErro('Não foi possível obter sua localização. Toque no mapa para marcar.'),
     )
   }
@@ -168,7 +176,15 @@ export default function CreatePostPage() {
   const mapa = (
     <div className="relative h-full overflow-hidden rounded-[28px] border border-grafite-200 bg-grafite-200">
       <Suspense fallback={<div className="h-full w-full animate-pulse bg-grafite-200" />}>
-        <MapaEscolha valor={coords} onEscolher={setCoords} cor={cor} />
+        <MapaEscolha
+          valor={coords}
+          onEscolher={(c) => {
+            setErro(null)
+            setCoords(c)
+          }}
+          onFora={() => setErro('Esse ponto fica fora da cidade do Recife. O Confluência funciona só dentro da linha amarela.')}
+          cor={cor}
+        />
       </Suspense>
       <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-between gap-2">
         <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-grafite-900 shadow backdrop-blur">
@@ -299,9 +315,9 @@ export default function CreatePostPage() {
                       placeholder="Preenchido sozinho quando você marca o ponto"
                       className="mt-1.5 w-full rounded-2xl border border-grafite-300 bg-white px-4 py-3 text-sm text-grafite-900 focus:border-amarelo-500 focus:outline-none focus:ring-4 focus:ring-amarelo-500/20"
                     />
-                    {foraDaRmr && (
+                    {foraDoRecife && (
                       <p className="mt-2 text-sm text-status-vermelho-700">
-                        Esse ponto está fora da Região Metropolitana do Recife. Ajuste no mapa.
+                        Esse ponto está fora da cidade do Recife. Ajuste no mapa.
                       </p>
                     )}
                   </div>

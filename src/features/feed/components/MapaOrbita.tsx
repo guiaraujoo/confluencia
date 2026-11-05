@@ -3,6 +3,7 @@ import Map, { Marker, type MapRef } from 'react-map-gl/maplibre'
 import { setWorkerUrl } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { aplicarBloqueio } from '../bloqueio'
 
 setWorkerUrl(workerUrl)
 
@@ -42,6 +43,7 @@ export default function MapaOrbita({ latitude, longitude, cor }: MapaOrbitaProps
         },
       })
     }
+    aplicarBloqueio(map)
     // Começa com o crédito do mapa recolhido (só o "i"): aberto, ele cobre o título no celular.
     map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show')
     // A animação é do próprio MapLibre: termina sozinha e para se a pessoa arrastar o mapa.

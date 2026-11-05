@@ -9,6 +9,8 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { CATEGORIAS, type PostRepercussao } from '../../../types/database'
 import { CATEGORIA_RGB, RAMPA_REPERCUSSAO } from '../cores'
 import { agrupar } from '../agrupar'
+import { aplicarBloqueio } from '../bloqueio'
+import AvisoBloqueio from './AvisoBloqueio'
 
 // O MapLibre 6 acha o próprio worker relativo ao módulo; o pré-empacotamento
 // do Vite muda esse caminho, então apontamos o arquivo explicitamente.
@@ -104,6 +106,7 @@ export default function MapaVivo({ posts, ativoId, foco, modo3d, onHover, onSele
         },
       })
     }
+    aplicarBloqueio(map)
     // No desktop o painel cobre ~440px à esquerda: a câmera compensa para a cidade ficar à vista.
     // No celular é a gaveta que cobre a metade de baixo.
     if (window.matchMedia('(min-width: 1024px)').matches) map.setPadding({ left: 500, top: 0, right: 0, bottom: 0 })
@@ -287,6 +290,7 @@ export default function MapaVivo({ posts, ativoId, foco, modo3d, onHover, onSele
       attributionControl={{ compact: true }}
     >
       <NavigationControl position="bottom-right" visualizePitch style={{ marginBottom: 84, marginRight: 14 }} />
+      <AvisoBloqueio className="right-16 bottom-[52px] hidden lg:inline-flex" />
       <DeckOverlay
         aoCriar={guardarOverlay}
         layers={recentes.length ? [...camadas, camadaPulso(recentes, 0)] : camadas}
