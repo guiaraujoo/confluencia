@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { useEhGestor } from '../context/useEhGestor'
 
 // Onde relatar faz sentido: no mapa, nos projetos e no perfil. Fica fora do
 // próprio formulário, do detalhe de um relato, das telas de conta e do painel.
@@ -12,9 +13,11 @@ const ROTAS = [/^\/feed\/?$/, /^\/projetos(\/[^/]+)?\/?$/, /^\/u\//]
 // um pino no mapa.
 export default function BotaoRelatar() {
   const { user } = useAuth()
+  // O órgão responde e cria projetos; relatar é da população.
+  const ehGestor = useEhGestor()
   const { pathname } = useLocation()
   const [aberto, setAberto] = useState(false)
-  const visivel = Boolean(user) && pathname !== '/projetos/novo' && ROTAS.some((r) => r.test(pathname))
+  const visivel = Boolean(user) && !ehGestor && pathname !== '/projetos/novo' && ROTAS.some((r) => r.test(pathname))
 
   return (
     <AnimatePresence>

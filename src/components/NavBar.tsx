@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useEhGestor } from '../context/useEhGestor'
 import { useProjetosSalvos } from '../features/projetos/useProjetosSalvos'
 import Notificacoes from './Notificacoes'
 
@@ -66,12 +66,6 @@ interface ItemNav {
   curto: string
   icone: ReactNode
   ativo: (path: string) => boolean
-}
-
-function useEhGestor() {
-  const { profile } = useAuth()
-  // Sem Supabase (modo demonstração) o painel fica aberto — ver RequireInstitutional.
-  return !isSupabaseConfigured || Boolean(profile?.institucional_verificado)
 }
 
 // Navegação central em pílula: o item ativo tem um fundo amarelo que desliza
