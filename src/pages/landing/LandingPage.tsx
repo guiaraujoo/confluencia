@@ -141,22 +141,21 @@ function NavLanding() {
           <motion.img src="/logo.png" alt="" className="h-9 w-9" whileHover={{ rotate: -14 }} />
           <span className="font-heading text-lg font-extrabold text-grafite-900">Confluência</span>
         </Link>
+        {/* Só navega dentro da landing: a porta para o sistema é o "Entrar". */}
         <nav className="hidden items-center gap-1 text-sm font-semibold text-grafite-900 md:flex">
-          {[
-            { href: '#como-funciona', rotulo: 'Como funciona' },
-            { href: '/projetos', rotulo: 'Projetos' },
-            { href: '/feed', rotulo: 'Mapa da cidade' },
-          ].map((l) =>
-            l.href.startsWith('#') ? (
-              <a key={l.href} href={l.href} className="rounded-full px-4 py-2 transition-colors hover:bg-amarelo-100">
-                {l.rotulo}
-              </a>
-            ) : (
-              <Link key={l.href} to={l.href} className="rounded-full px-4 py-2 transition-colors hover:bg-amarelo-100">
-                {l.rotulo}
-              </Link>
-            ),
-          )}
+          {SECOES.map((l) => (
+            <a
+              key={l.id}
+              href={`#${l.id}`}
+              onClick={(e) => {
+                e.preventDefault()
+                document.getElementById(l.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="rounded-full px-4 py-2 transition-colors hover:bg-amarelo-100"
+            >
+              {l.rotulo}
+            </a>
+          ))}
         </nav>
         <Link
           to="/entrar"
@@ -169,6 +168,13 @@ function NavLanding() {
   )
 }
 
+const SECOES = [
+  { id: 'como-funciona', rotulo: 'Como funciona' },
+  { id: 'cidade', rotulo: 'A cidade' },
+  { id: 'numeros', rotulo: 'Em números' },
+  { id: 'experimente', rotulo: 'Experimente' },
+]
+
 // Números ao vivo, enormes, cada um com sua frase em serifa.
 function Numeros({ totais, carregou }: { totais: { relatos: number; apoios: number; bairros: number }; carregou: boolean }) {
   const projetos = MOCK_PROJETOS.filter((p) => p.status !== 'rejeitado').length
@@ -179,7 +185,7 @@ function Numeros({ totais, carregou }: { totais: { relatos: number; apoios: numb
     { valor: projetos, rotulo: 'projetos', frase: 'para acompanhar até a entrega' },
   ]
   return (
-    <section className="bg-grafite-50 px-[4vw] py-[16vh]">
+    <section id="numeros" className="bg-grafite-50 px-[4vw] py-[16vh]">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <h2 className="font-heading text-[clamp(2.6rem,6vw,6rem)] font-extrabold leading-[0.92] tracking-[-0.03em] text-grafite-900">
           Agora, <span className="font-serif font-normal italic text-amarelo-700">no Recife</span>
@@ -359,7 +365,7 @@ function Fileira({ fotos, grande, duracao, reverso }: { fotos: FotoCidade[]; gra
 
 function Colagem() {
   return (
-    <section className="overflow-hidden bg-grafite-50 py-28">
+    <section id="cidade" className="overflow-hidden bg-grafite-50 py-28">
       <div className="flex flex-wrap items-end justify-between gap-6 px-[4vw]">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amarelo-700">A cidade, de perto</p>

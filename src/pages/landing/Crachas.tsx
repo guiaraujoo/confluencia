@@ -170,7 +170,7 @@ export default function Crachas() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-amarelo-100 pb-24 pt-[14vh]">
+    <section id="experimente" className="relative overflow-hidden bg-amarelo-100 pb-24 pt-[14vh]">
       <div className="px-[4vw]">
         <h2 className="max-w-4xl font-heading text-[clamp(2.6rem,6vw,6rem)] font-extrabold leading-[0.92] tracking-[-0.03em] text-grafite-900">
           Pegue um crachá e <span className="font-serif font-normal italic text-amarelo-700">entre.</span>
