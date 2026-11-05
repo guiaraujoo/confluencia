@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import { dentroDoRecife } from '../../../lib/recife'
+import { bairroOficial } from '../../../lib/bairros'
+import CampoBairro from '../../../components/CampoBairro'
 import { CATEGORIAS, type Categoria, type PostRepercussao } from '../../../types/database'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import IconeCategoria from '../components/IconeCategoria'
@@ -36,7 +38,8 @@ async function bairroDoPonto([lat, lng]: [number, number]): Promise<string | nul
     if (!r.ok) return null
     const j = await r.json()
     const a = j.address ?? {}
-    return a.suburb ?? a.neighbourhood ?? a.quarter ?? a.city_district ?? null
+    // Só vale se bater com um dos 94 bairros oficiais do Recife.
+    return [a.suburb, a.neighbourhood, a.quarter, a.city_district].map(bairroOficial).find(Boolean) ?? null
   } catch {
     return null
   }
@@ -85,7 +88,7 @@ export default function CreatePostPage() {
 
   const podeAvancar = [
     categoria !== null,
-    coords !== null && !foraDoRecife && bairro.trim().length > 1,
+    coords !== null && !foraDoRecife && bairroOficial(bairro) !== null,
     descricao.trim().length >= 10,
     true,
   ][passo]
@@ -305,15 +308,15 @@ export default function CreatePostPage() {
                     <label htmlFor="bairro" className="mt-5 block text-sm font-semibold text-grafite-900">
                       Bairro {buscandoBairro && <span className="font-normal text-grafite-500">· descobrindo pelo mapa…</span>}
                     </label>
-                    <input
+                    <CampoBairro
                       id="bairro"
                       value={bairro}
-                      onChange={(e) => {
+                      onChange={(b) => {
                         bairroEditado.current = true
-                        setBairro(e.target.value)
+                        setBairro(b)
                       }}
-                      placeholder="Preenchido sozinho quando você marca o ponto"
-                      className="mt-1.5 w-full rounded-2xl border border-grafite-300 bg-white px-4 py-3 text-sm text-grafite-900 focus:border-amarelo-500 focus:outline-none focus:ring-4 focus:ring-amarelo-500/20"
+                      vazio="Marque o ponto ou escolha o bairro"
+                      className="mt-1.5"
                     />
                     {foraDoRecife && (
                       <p className="mt-2 text-sm text-status-vermelho-700">

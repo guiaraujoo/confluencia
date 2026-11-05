@@ -22,6 +22,8 @@ import { CATEGORIA_RGB, rgb } from '../cores'
 import { useProjetosSalvos } from '../../projetos/useProjetosSalvos'
 import { MOCK_PROJETOS } from '../../projetos/mock'
 import { FOTOS_PROJETO } from '../../projetos/fotos'
+import CampoBairro from '../../../components/CampoBairro'
+import { bairroOficial } from '../../../lib/bairros'
 import { ETAPAS_PUBLICAS, indiceEtapa, proximoMarco } from '../../projetos/etapas'
 
 const APELIDO_VALIDO = /^[a-z0-9_.]{3,20}$/
@@ -637,7 +639,7 @@ function PainelConta({ gestor }: { gestor: boolean }) {
 
 function EditarPerfil({ perfil, onFechar, onSalvo }: { perfil: PerfilPublico; onFechar: () => void; onSalvo: () => void }) {
   const [apelido, setApelido] = useState(perfil.apelido ?? '')
-  const [bairro, setBairro] = useState(perfil.bairro ?? '')
+  const [bairro, setBairro] = useState(bairroOficial(perfil.bairro) ?? '')
   const [bio, setBio] = useState(perfil.bio ?? '')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -717,14 +719,7 @@ function EditarPerfil({ perfil, onFechar, onSalvo }: { perfil: PerfilPublico; on
         <label className="mt-4 block text-sm font-semibold text-grafite-900" htmlFor="bairro-perfil">
           Seu bairro
         </label>
-        <input
-          id="bairro-perfil"
-          value={bairro}
-          onChange={(e) => setBairro(e.target.value)}
-          placeholder="ex: Boa Vista"
-          maxLength={80}
-          className="mt-1.5 w-full rounded-2xl border border-grafite-300 px-4 py-3 text-sm text-grafite-900 focus:border-amarelo-500 focus:outline-none"
-        />
+        <CampoBairro id="bairro-perfil" value={bairro} onChange={setBairro} vazio="Prefiro não dizer" className="mt-1.5" />
 
         <label className="mt-4 block text-sm font-semibold text-grafite-900" htmlFor="bio">
           Sobre você
