@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion, useInView } from 'framer-motion'
 import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
@@ -429,7 +429,75 @@ function CartaoApoio({ post, onAtualizar }: { post: PostRepercussao; onAtualizar
             Relatar parecido
           </Link>
         </div>
+        {meu && <ApagarRelato postId={post.id} />}
       </div>
+    </div>
+  )
+}
+
+// Só quem relatou vê: apagar pede confirmação. Apoios, comentários e respostas
+// saem junto (cascade no banco); um projeto que nasceu do relato continua e só
+// perde o link (0011).
+function ApagarRelato({ postId }: { postId: string }) {
+  const navigate = useNavigate()
+  const [confirmando, setConfirmando] = useState(false)
+  const [apagando, setApagando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function apagar() {
+    setApagando(true)
+    setErro(null)
+    const { data, error } = await supabase.from('posts').delete().eq('id', postId).select('id')
+    setApagando(false)
+    if (error || !data?.length) {
+      setErro(error ? `Não foi possível apagar: ${error.message}` : 'Não foi possível apagar este relato.')
+      return
+    }
+    navigate('/feed', { replace: true })
+  }
+
+  return (
+    <div className="mt-4 border-t border-grafite-200 pt-4">
+      <AnimatePresence mode="wait" initial={false}>
+        {confirmando ? (
+          <motion.div key="confirma" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <p className="text-sm text-grafite-900">
+              Apagar este relato de vez? Apoios e comentários somem junto. Não dá para desfazer.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmando(false)}
+                disabled={apagando}
+                className="rounded-2xl border border-grafite-300 px-3 py-3 text-sm font-semibold text-grafite-900 disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={apagar}
+                disabled={apagando}
+                className="rounded-2xl bg-status-vermelho-500 px-3 py-3 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {apagando ? 'Apagando…' : 'Apagar relato'}
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.button
+            key="botao"
+            type="button"
+            onClick={() => setConfirmando(true)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full rounded-2xl px-3 py-2.5 text-sm font-semibold text-status-vermelho-700 transition-colors hover:bg-status-vermelho-50"
+          >
+            Apagar meu relato
+          </motion.button>
+        )}
+      </AnimatePresence>
+      {erro && <p className="mt-2 text-xs text-status-vermelho-700">{erro}</p>}
     </div>
   )
 }
