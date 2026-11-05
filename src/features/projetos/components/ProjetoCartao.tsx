@@ -5,8 +5,8 @@ import { CATEGORIAS, STATUS_LABELS, type Projeto } from '../../../types/database
 import IconeCategoria from '../../feed/components/IconeCategoria'
 import { CATEGORIA_RGB } from '../../feed/cores'
 import { ETAPAS_PUBLICAS, dataLocal, diasRestantes, indiceEtapa, marcosCumpridos, proximoMarco } from '../etapas'
-import { FOTOS_PROJETO } from '../fotos'
-import { CONTEUDO_PROJETO, reaisCurto } from '../conteudo'
+import { fotoDoProjeto } from '../fotos'
+import { conteudoDoProjeto, reaisCurto } from '../conteudo'
 import BotaoSalvar from './BotaoSalvar'
 
 const INCLINACAO = 6
@@ -22,8 +22,8 @@ export default function ProjetoCartao({ projeto, agora, indice }: { projeto: Pro
   const feitos = marcosCumpridos(projeto)
   const proximo = proximoMarco(projeto)
   const dias = diasRestantes(projeto, agora)
-  const foto = FOTOS_PROJETO[projeto.id]
-  const conteudo = CONTEUDO_PROJETO[projeto.id]
+  const foto = fotoDoProjeto(projeto.id)
+  const conteudo = conteudoDoProjeto(projeto.id)
 
   const mx = useMotionValue(0.5)
   const my = useMotionValue(0.5)

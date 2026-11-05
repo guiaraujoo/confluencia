@@ -3,7 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
-import { isWithinRecifeMetro } from '../../../lib/regiao'
+import { dentroDoRecife } from '../../../lib/recife'
+import { bairroOficial } from '../../../lib/bairros'
+import CampoBairro from '../../../components/CampoBairro'
+import CampoFoto from '../../../components/CampoFoto'
+import { enviarFoto } from '../../../lib/fotos'
 import { CATEGORIAS, type Categoria, type PostRepercussao } from '../../../types/database'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import IconeCategoria from '../components/IconeCategoria'
@@ -36,7 +40,8 @@ async function bairroDoPonto([lat, lng]: [number, number]): Promise<string | nul
     if (!r.ok) return null
     const j = await r.json()
     const a = j.address ?? {}
-    return a.suburb ?? a.neighbourhood ?? a.quarter ?? a.city_district ?? null
+    // Só vale se bater com um dos 94 bairros oficiais do Recife.
+    return [a.suburb, a.neighbourhood, a.quarter, a.city_district].map(bairroOficial).find(Boolean) ?? null
   } catch {
     return null
   }
@@ -56,6 +61,8 @@ export default function CreatePostPage() {
   const [buscandoBairro, setBuscandoBairro] = useState(false)
   const [descricao, setDescricao] = useState('')
   const [anonimo, setAnonimo] = useState(false)
+  const [foto, setFoto] = useState<File | null>(null)
+  const [fotoPrevia, setFotoPrevia] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [publicando, setPublicando] = useState(false)
   const [publicado, setPublicado] = useState(false)
@@ -64,7 +71,7 @@ export default function CreatePostPage() {
   const anonimoForcado = categoria === 'seguranca'
   const anonimoEfetivo = anonimo || anonimoForcado
   const cor = categoria ? rgb(CATEGORIA_RGB[categoria]) : 'var(--color-amarelo-500)'
-  const foraDaRmr = coords !== null && !isWithinRecifeMetro(coords)
+  const foraDoRecife = coords !== null && !dentroDoRecife(coords)
 
   // Preenche o bairro sozinho a partir do ponto (se a pessoa não digitou um).
   useEffect(() => {
@@ -85,7 +92,7 @@ export default function CreatePostPage() {
 
   const podeAvancar = [
     categoria !== null,
-    coords !== null && !foraDaRmr && bairro.trim().length > 1,
+    coords !== null && !foraDoRecife && bairroOficial(bairro) !== null,
     descricao.trim().length >= 10,
     true,
   ][passo]
@@ -102,7 +109,15 @@ export default function CreatePostPage() {
       return
     }
     navigator.geolocation.getCurrentPosition(
-      (p) => setCoords([p.coords.latitude, p.coords.longitude]),
+      (p) => {
+        const aqui: [number, number] = [p.coords.latitude, p.coords.longitude]
+        // No computador a posição vem estimada pela internet e pode errar por
+        // milhares de quilômetros: fora da cidade, o mapa não sai do lugar.
+        if (dentroDoRecife(aqui)) {
+          setErro(null)
+          setCoords(aqui)
+        } else setErro('Sua localização aparece fora da cidade do Recife. Toque no mapa, dentro da linha amarela.')
+      },
       () => setErro('Não foi possível obter sua localização. Toque no mapa para marcar.'),
     )
   }
@@ -111,6 +126,16 @@ export default function CreatePostPage() {
     if (!user || !categoria || !coords) return
     setPublicando(true)
     setErro(null)
+    let fotoUrl: string | null = null
+    if (foto) {
+      try {
+        fotoUrl = await enviarFoto(foto, 'relato', user.id)
+      } catch (e) {
+        setPublicando(false)
+        setErro(e instanceof Error ? e.message : 'Não foi possível enviar a foto.')
+        return
+      }
+    }
     const relato = {
       user_id: user.id,
       categoria,
@@ -118,6 +143,7 @@ export default function CreatePostPage() {
       descricao: descricao.trim(),
       latitude: coords[0],
       longitude: coords[1],
+      foto_url: fotoUrl,
     }
     let { data, error } = await supabase.from('posts').insert({ ...relato, anonimo: anonimoEfetivo }).select('id').single()
     // Banco ainda sem a 0008 (sem a coluna `anonimo`): publica sem o campo.
@@ -155,7 +181,7 @@ export default function CreatePostPage() {
     categoria: categoria ?? 'outros',
     bairro: bairro || 'Seu bairro',
     descricao: descricao || 'Sua descrição aparece aqui.',
-    foto_url: null,
+    foto_url: fotoPrevia,
     latitude: coords?.[0] ?? 0,
     longitude: coords?.[1] ?? 0,
     created_at: new Date().toISOString(),
@@ -168,7 +194,15 @@ export default function CreatePostPage() {
   const mapa = (
     <div className="relative h-full overflow-hidden rounded-[28px] border border-grafite-200 bg-grafite-200">
       <Suspense fallback={<div className="h-full w-full animate-pulse bg-grafite-200" />}>
-        <MapaEscolha valor={coords} onEscolher={setCoords} cor={cor} />
+        <MapaEscolha
+          valor={coords}
+          onEscolher={(c) => {
+            setErro(null)
+            setCoords(c)
+          }}
+          onFora={() => setErro('Esse ponto fica fora da cidade do Recife. O Confluência funciona só dentro da linha amarela.')}
+          cor={cor}
+        />
       </Suspense>
       <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-between gap-2">
         <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-grafite-900 shadow backdrop-blur">
@@ -289,19 +323,19 @@ export default function CreatePostPage() {
                     <label htmlFor="bairro" className="mt-5 block text-sm font-semibold text-grafite-900">
                       Bairro {buscandoBairro && <span className="font-normal text-grafite-500">· descobrindo pelo mapa…</span>}
                     </label>
-                    <input
+                    <CampoBairro
                       id="bairro"
                       value={bairro}
-                      onChange={(e) => {
+                      onChange={(b) => {
                         bairroEditado.current = true
-                        setBairro(e.target.value)
+                        setBairro(b)
                       }}
-                      placeholder="Preenchido sozinho quando você marca o ponto"
-                      className="mt-1.5 w-full rounded-2xl border border-grafite-300 bg-white px-4 py-3 text-sm text-grafite-900 focus:border-amarelo-500 focus:outline-none focus:ring-4 focus:ring-amarelo-500/20"
+                      vazio="Marque o ponto ou escolha o bairro"
+                      className="mt-1.5"
                     />
-                    {foraDaRmr && (
+                    {foraDoRecife && (
                       <p className="mt-2 text-sm text-status-vermelho-700">
-                        Esse ponto está fora da Região Metropolitana do Recife. Ajuste no mapa.
+                        Esse ponto está fora da cidade do Recife. Ajuste no mapa.
                       </p>
                     )}
                   </div>
@@ -330,6 +364,20 @@ export default function CreatePostPage() {
                         </span>
                       </div>
                     </div>
+
+                    <CampoFoto
+                      className="mt-5"
+                      previa={fotoPrevia}
+                      rotulo="Foto do problema"
+                      dica="Opcional. Sem foto, o card mostra uma foto da região do bairro."
+                      onEscolher={(arquivo) => {
+                        setFoto(arquivo)
+                        setFotoPrevia((antiga) => {
+                          if (antiga) URL.revokeObjectURL(antiga)
+                          return arquivo ? URL.createObjectURL(arquivo) : null
+                        })
+                      }}
+                    />
 
                     <div
                       className={`mt-5 flex items-start gap-4 rounded-[24px] border p-4 transition-colors ${

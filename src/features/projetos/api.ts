@@ -97,7 +97,7 @@ export async function buscarMeuComprovante(projetoId: string): Promise<string | 
   return data ?? null
 }
 
-export type MotivoFalhaVoto = 'ja_votou' | 'sem_login' | 'fora_da_consulta' | 'consulta_encerrada' | 'erro'
+export type MotivoFalhaVoto = 'ja_votou' | 'sem_login' | 'fora_da_consulta' | 'consulta_encerrada' | 'orgao' | 'erro'
 
 export type ResultadoVoto =
   | { ok: true; comprovante: string }
@@ -107,7 +107,7 @@ export type ResultadoVoto =
  * Registra o voto chamando a função `votar` do banco, que valida login, status e
  * prazo, bloqueia voto duplicado (UNIQUE) e GERA o hash do comprovante.
  * Códigos de erro: 23505 = já votou · CF001 = projeto fora de consulta ·
- * CF002 = prazo encerrado · 28000 = sem login (ver 0007_votacao_projetos.sql).
+ * CF002 = prazo encerrado · CF003 = conta de órgão (0013) · 28000 = sem login (ver 0007_votacao_projetos.sql).
  */
 export async function votar(projetoId: string, opcao: 'favor' | 'contra'): Promise<ResultadoVoto> {
   if (!isSupabaseConfigured) {
@@ -143,6 +143,9 @@ export async function votar(projetoId: string, opcao: 'favor' | 'contra'): Promi
   }
   if (codigo === 'CF002') {
     return { ok: false, motivo: 'consulta_encerrada', mensagem: 'A consulta pública deste projeto já foi encerrada.' }
+  }
+  if (codigo === 'CF003') {
+    return { ok: false, motivo: 'orgao', mensagem: 'Contas de órgão público acompanham o resultado, mas não votam.' }
   }
   return {
     ok: false,

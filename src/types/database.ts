@@ -97,6 +97,9 @@ export interface PerfilPublico {
   institucional_verificado: boolean
   orgao_nome: string | null
   created_at?: string
+  /** Fotos de perfil e capa (0015), no bucket "fotos". */
+  avatar_url?: string | null
+  capa_url?: string | null
 }
 
 // Tabela `post_apoios`: um apoio por usuário por post (PK composta).
@@ -171,4 +174,6 @@ export interface Profile {
   apelido?: string | null
   bairro?: string | null
   bio?: string | null
+  avatar_url?: string | null
+  capa_url?: string | null
 }

@@ -1,3 +1,4 @@
+import { apelidoExemplo } from './mock'
 // Conteúdo completo dos projetos de exemplo — descrição detalhada, estimativa,
 // fotos da obra, antes/depois e vídeos. Provisório: hoje a tabela `projetos`
 // só tem nome/descrição curta/status/linha do tempo. Quando ela ganhar esses
@@ -53,7 +54,7 @@ const RUA_DO_BOM_JESUS_HOJE: Midia = {
   fonte: 'https://commons.wikimedia.org/wiki/File:Rua_do_Bom_Jesus_-_Recife_Antigo_-_Recife,_Pernambuco,_Brasil.jpg',
 }
 
-export const CONTEUDO_PROJETO: Record<string, ConteudoProjeto> = {
+export const CONTEUDO_PROJETO: Record<'p1' | 'p2' | 'p4' | 'p5' | 'p6', ConteudoProjeto> = {
   p1: {
     problema:
       'A Av. Norte liga Casa Amarela ao centro e concentra ônibus, ciclistas e pedestres sem separação. O asfalto está gasto, a iluminação é fraca e não há ciclovia: quem pedala divide a faixa com os ônibus.',
@@ -191,4 +192,10 @@ export function reaisCurto(v: number) {
   if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mi`
   if (v >= 1_000) return `R$ ${Math.round(v / 1_000)} mil`
   return formatarReais(v)
+}
+
+/** Conteúdo de um projeto da vitrine pelo id (do banco ou do mock). */
+export function conteudoDoProjeto(id: string): ConteudoProjeto | undefined {
+  const apelido = apelidoExemplo(id)
+  return apelido && apelido in CONTEUDO_PROJETO ? CONTEUDO_PROJETO[apelido as keyof typeof CONTEUDO_PROJETO] : undefined
 }

@@ -8,6 +8,7 @@ import IconeCategoria from './IconeCategoria'
 import AnelRepercussao from './AnelRepercussao'
 import { realcar } from '../busca'
 import AutorLinha from './Autor'
+import CapaRelato from './CapaRelato'
 
 interface RelatoItemProps {
   post: PostRepercussao
@@ -84,6 +85,10 @@ export default function RelatoItem({ post, ativo, onHover, onVerNoMapa, busca = 
             transition={{ type: 'spring', stiffness: 500, damping: 40 }}
           />
         )}
+
+        <Link to={`/feed/${post.id}`} tabIndex={-1} aria-hidden className="relative block">
+          <CapaRelato fotoUrl={post.foto_url} bairro={post.bairro} className="h-24" />
+        </Link>
 
         <div className="relative border-b border-grafite-100 px-4 pb-2 pt-3 pr-4">
           <AutorLinha

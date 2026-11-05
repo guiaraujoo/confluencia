@@ -40,9 +40,8 @@ export default function RequireInstitutional({ children }: { children: ReactNode
         <Card>
           <p className="text-sm text-grafite-900 font-medium mb-1">Acesso restrito</p>
           <p className="text-sm text-grafite-500">
-            O painel de gestor é visível só para contas institucionais verificadas. Se você representa
-            um órgão público, peça a verificação da sua conta (feita manualmente pelo time, ver Tarefa
-            3.2 do Guilherme).
+            O painel de gestor é só para contas de órgãos públicos verificadas. Se você representa um
+            órgão do Recife, fale com a equipe do Confluência para verificar a sua conta.
           </p>
         </Card>
       </div>

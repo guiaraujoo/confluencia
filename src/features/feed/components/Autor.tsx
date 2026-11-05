@@ -23,6 +23,17 @@ export function Avatar({ perfil, anonimo, size = 32 }: AvatarProps) {
       </span>
     )
   }
+  if (perfil.avatar_url) {
+    return (
+      <img
+        src={perfil.avatar_url}
+        alt=""
+        loading="lazy"
+        className={`flex-shrink-0 rounded-full object-cover ${perfil.institucional_verificado ? 'ring-2 ring-status-azul-500 ring-offset-2' : ''}`}
+        style={{ width: size, height: size }}
+      />
+    )
+  }
   const inicial = nomePublico(perfil).replace('@', '')[0]?.toUpperCase() ?? '?'
   return (
     <span

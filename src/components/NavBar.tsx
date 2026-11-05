@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useEhGestor } from '../context/useEhGestor'
 import { useProjetosSalvos } from '../features/projetos/useProjetosSalvos'
 import Notificacoes from './Notificacoes'
 
@@ -68,12 +68,6 @@ interface ItemNav {
   ativo: (path: string) => boolean
 }
 
-function useEhGestor() {
-  const { profile } = useAuth()
-  // Sem Supabase (modo demonstração) o painel fica aberto — ver RequireInstitutional.
-  return !isSupabaseConfigured || Boolean(profile?.institucional_verificado)
-}
-
 // Navegação central em pílula: o item ativo tem um fundo amarelo que desliza
 // entre os itens, e um fundo claro acompanha o item sob o mouse.
 function NavCentral() {
@@ -94,11 +88,11 @@ function NavCentral() {
       label: 'Projetos',
       curto: 'Projetos',
       icone: ICONES.projetos,
-      ativo: (p) => p.startsWith('/projetos'),
+      ativo: (p) => p.startsWith('/projetos') && p !== '/projetos/novo',
     },
   ]
   if (ehGestor) {
-    itens.push({ to: '/painel', label: 'Painel de gestor', curto: 'Painel', icone: ICONES.painel, ativo: (p) => p === '/painel' })
+    itens.push({ to: '/painel', label: 'Painel de gestor', curto: 'Painel', icone: ICONES.painel, ativo: (p) => p === '/painel' || p === '/projetos/novo' })
   }
 
   return (

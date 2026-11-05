@@ -1,6 +1,6 @@
 # Contribuições por integrante
 
-Escopo combinado no início do projeto (guias individuais) e o que cada pessoa entregou, com evidência no repositório. Números de 29/10/2026.
+Escopo combinado no início do projeto (guias individuais) e o que cada pessoa entregou, com evidência no repositório. Números de 29/10/2026; a Semana 5 está no fim.
 
 ## Divisão combinada
 
@@ -25,6 +25,7 @@ Escopo combinado no início do projeto (guias individuais) e o que cada pessoa e
 | Repaginada: landing, mapa 3D do Feed, tela de Entrar com contas demo, perfil único, camada social (migrations 0008 e 0009), redesenho de Projetos, otimização de desempenho, simulação visual (Tarefa 4.1) | 25 commits integrados no [PR #10](https://github.com/joaobatis1a/confluencia/pull/10) |
 | Integração da Semana 3 com a repaginada (conflitos, renumeração das migrations, telas novas lendo pelo `api.ts`) | [PR #10](https://github.com/joaobatis1a/confluencia/pull/10) |
 | Cronograma, guias semanais, documentação | [PR #2](https://github.com/joaobatis1a/confluencia/pull/2), `docs/` |
+| Semana 5: mapa só do Recife (área bloqueada fora da cidade), gestor sem voto, apagar relato, 94 bairros oficiais, projetos de exemplo no banco, painel do órgão v2, novo projeto v2, fotos de perfil, capa e relato, foto da região no card (migrations 0012 a 0015) | [PR #17](https://github.com/joaobatis1a/confluencia/pull/17), [Semana 5](semana-5-tarefas.md) |
 
 ### Ana Beatriz
 
@@ -57,10 +58,16 @@ Na revisão da Semana 3 foi encontrado um curinga do `LIKE` em `verificar_compro
 
 Além disso, boa parte do trabalho do Guilherme foi feita no painel do Supabase (criar o projeto, aplicar as migrations, configurar a autenticação e as contas), o que não gera commit nenhum. As tabelas "O que cada um entregou" acima são a referência de autoria; a contagem de commits não é.
 
-## Semana 4 (em andamento)
+## Semana 4 (concluída)
 
 | Pessoa | Branch | Tarefas |
 |---|---|---|
 | Ana | `feature/feed-projetos-origem` | 4.1 Feed ↔ Projetos pelo campo origem · 4.2 ajustes e revisão do banco · 4.3 responsividade |
 | Guilherme | `feature/integracao-seguranca-deploy` | 4.1 aplicar 0007 a 0009 e testes ponta a ponta · 4.2 bugs e queries · 4.3 segurança e backup · 4.4 deploy e README |
 | João | `feature/polimento-feed-mapa` | 4.2 clusters no mapa novo (feito, PR #12) · 4.3 responsividade do Feed (feito, PR #12) e visual de Painel e Criar projeto · roteiro da apresentação |
+
+As branches da Ana e do Guilherme entraram na `main` pelos PRs #16 e #15.
+
+## Semana 5 (em andamento)
+
+Branch `feature/semana5-recife`, [PR #17](https://github.com/joaobatis1a/confluencia/pull/17). O João fez o código dos nove pontos levantados em 05/11. O que falta, e quem faz, está em [Semana 5: o que falta fazer](semana-5-tarefas.md): o Guilherme aplica as migrations 0011 a 0015 e o script de limpeza no Supabase; a Ana e o Guilherme revisam o PR e testam em produção; a Ana atualiza a documentação do banco e do guia de uso.

@@ -20,8 +20,12 @@ import { Avatar, SeloOrgao } from '../components/Autor'
 import IconeCategoria from '../components/IconeCategoria'
 import { CATEGORIA_RGB, rgb } from '../cores'
 import { useProjetosSalvos } from '../../projetos/useProjetosSalvos'
-import { MOCK_PROJETOS } from '../../projetos/mock'
-import { FOTOS_PROJETO } from '../../projetos/fotos'
+import { useProjetosPublicos } from '../../projetos/vitrine'
+import { fotoDoProjeto } from '../../projetos/fotos'
+import CampoBairro from '../../../components/CampoBairro'
+import { bairroOficial } from '../../../lib/bairros'
+import CampoFoto from '../../../components/CampoFoto'
+import { enviarFoto } from '../../../lib/fotos'
 import { ETAPAS_PUBLICAS, indiceEtapa, proximoMarco } from '../../projetos/etapas'
 
 const APELIDO_VALIDO = /^[a-z0-9_.]{3,20}$/
@@ -57,6 +61,7 @@ export default function PerfilPublicoPage() {
   const [versao, setVersao] = useState(0)
   const [ola] = useState(saudacao)
   const { salvos } = useProjetosSalvos()
+  const todosProjetos = useProjetosPublicos()
   const meu = Boolean(user && user.id === id)
 
   useEffect(() => {
@@ -76,6 +81,8 @@ export default function PerfilPublicoPage() {
               bio: profile?.bio ?? null,
               institucional_verificado: Boolean(profile?.institucional_verificado),
               orgao_nome: profile?.orgao_nome ?? null,
+              avatar_url: profile?.avatar_url ?? null,
+              capa_url: profile?.capa_url ?? null,
             }
           : null)
       const [{ data: posts }, { data: resps }] = await Promise.all([
@@ -117,7 +124,7 @@ export default function PerfilPublicoPage() {
   const apoios = relatos.reduce((s, r) => s + r.interacoes, 0)
   const comentarios = relatos.reduce((s, r) => s + (r.comentarios ?? 0), 0)
   const mudaram = relatos.filter((r) => r.status_oficial === 'virou_projeto' || r.status_oficial === 'resolvido').length
-  const acompanhados = MOCK_PROJETOS.filter((p) => salvos.includes(p.id))
+  const acompanhados = todosProjetos.filter((p) => salvos.includes(p.id))
   const selos = [
     orgao && { texto: 'Órgão verificado', cor: 'bg-status-azul-50 text-status-azul-700' },
     relatos.length >= 3 && { texto: 'Vizinho ativo', cor: 'bg-amarelo-100 text-amarelo-900' },
@@ -162,7 +169,11 @@ export default function PerfilPublicoPage() {
     <div className="pb-24">
       {/* Capa ------------------------------------------------------------- */}
       <section className="relative h-48 overflow-hidden sm:h-60" style={{ background: corAvatar(perfil.id) }}>
-        <Topografia semente={perfil.id.charCodeAt(0) / 7} className="absolute inset-0 h-full w-full text-white/25" />
+        {perfil.capa_url ? (
+          <img src={perfil.capa_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <Topografia semente={perfil.id.charCodeAt(0) / 7} className="absolute inset-0 h-full w-full text-white/25" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
         {meu && (
           <p className="absolute left-0 right-0 top-6 mx-auto max-w-5xl px-5 font-serif text-2xl italic text-white/90 sm:px-8 sm:text-3xl">
@@ -482,7 +493,7 @@ function ListaRespostas({ respostas }: { respostas: RespostaOficial[] }) {
 // Projetos salvos: foto do lugar, etapa atual no trilho e o próximo marco.
 function ListaAcompanhando() {
   const { salvos, alternar } = useProjetosSalvos()
-  const projetos = MOCK_PROJETOS.filter((p) => salvos.includes(p.id))
+  const projetos = useProjetosPublicos().filter((p) => salvos.includes(p.id))
   if (projetos.length === 0) {
     return (
       <Vazio
@@ -496,7 +507,7 @@ function ListaAcompanhando() {
     <ul className="grid gap-6 sm:grid-cols-2">
       <AnimatePresence mode="popLayout">
         {projetos.map((p) => {
-          const foto = FOTOS_PROJETO[p.id]
+          const foto = fotoDoProjeto(p.id)
           const etapa = indiceEtapa(p.status)
           const marco = proximoMarco(p)
           return (
@@ -637,8 +648,11 @@ function PainelConta({ gestor }: { gestor: boolean }) {
 
 function EditarPerfil({ perfil, onFechar, onSalvo }: { perfil: PerfilPublico; onFechar: () => void; onSalvo: () => void }) {
   const [apelido, setApelido] = useState(perfil.apelido ?? '')
-  const [bairro, setBairro] = useState(perfil.bairro ?? '')
+  const [bairro, setBairro] = useState(bairroOficial(perfil.bairro) ?? '')
   const [bio, setBio] = useState(perfil.bio ?? '')
+  const [avatarUrl, setAvatarUrl] = useState(perfil.avatar_url ?? null)
+  const [capaUrl, setCapaUrl] = useState(perfil.capa_url ?? null)
+  const [enviando, setEnviando] = useState<'avatar' | 'capa' | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const apelidoNormal = apelido.trim().toLowerCase()
@@ -650,21 +664,39 @@ function EditarPerfil({ perfil, onFechar, onSalvo }: { perfil: PerfilPublico; on
     return () => window.removeEventListener('keydown', esc)
   }, [onFechar])
 
+  async function trocarFoto(arquivo: File | null, tipo: 'avatar' | 'capa') {
+    const definir = tipo === 'avatar' ? setAvatarUrl : setCapaUrl
+    if (!arquivo) return definir(null)
+    setEnviando(tipo)
+    setErro(null)
+    try {
+      definir(await enviarFoto(arquivo, tipo, perfil.id))
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível enviar a foto.')
+    } finally {
+      setEnviando(null)
+    }
+  }
+
   async function salvar(e: FormEvent) {
     e.preventDefault()
-    if (!apelidoOk) return
+    if (!apelidoOk || enviando) return
     setSalvando(true)
     setErro(null)
+    const campos = { apelido: apelidoNormal || null, bairro: bairro.trim() || null, bio: bio.trim() || null }
+    const fotosMudaram = avatarUrl !== (perfil.avatar_url ?? null) || capaUrl !== (perfil.capa_url ?? null)
     const { error } = await supabase
       .from('profiles')
-      .update({ apelido: apelidoNormal || null, bairro: bairro.trim() || null, bio: bio.trim() || null })
+      .update(fotosMudaram ? { ...campos, avatar_url: avatarUrl, capa_url: capaUrl } : campos)
       .eq('id', perfil.id)
     setSalvando(false)
     if (error) {
       setErro(
         error.code === '23505'
           ? 'Esse apelido já está em uso. Tente outro.'
-          : error.message.includes('apelido')
+          : /avatar_url|capa_url/.test(error.message)
+            ? 'As fotos de perfil ainda não estão ativas no banco (falta aplicar a migration 0015).'
+            : error.message.includes('apelido')
             ? 'O perfil público ainda não está ativo no banco (falta aplicar a migration 0008).'
             : `Não foi possível salvar: ${error.message}`,
       )
@@ -696,6 +728,22 @@ function EditarPerfil({ perfil, onFechar, onSalvo }: { perfil: PerfilPublico; on
         <p className="font-heading text-2xl font-extrabold text-grafite-900">Editar perfil</p>
         <p className="mt-1 text-sm text-grafite-500">É assim que você aparece no Feed. Seu nome completo não é mostrado.</p>
 
+        <div className="mt-5 grid grid-cols-[96px_1fr] gap-3">
+          <CampoFoto
+            redondo
+            previa={avatarUrl}
+            rotulo="Foto"
+            carregando={enviando === 'avatar'}
+            onEscolher={(a) => trocarFoto(a, 'avatar')}
+          />
+          <CampoFoto
+            previa={capaUrl}
+            rotulo="Capa"
+            carregando={enviando === 'capa'}
+            onEscolher={(a) => trocarFoto(a, 'capa')}
+          />
+        </div>
+
         <label className="mt-5 block text-sm font-semibold text-grafite-900" htmlFor="apelido">
           Apelido
         </label>
@@ -717,14 +765,7 @@ function EditarPerfil({ perfil, onFechar, onSalvo }: { perfil: PerfilPublico; on
         <label className="mt-4 block text-sm font-semibold text-grafite-900" htmlFor="bairro-perfil">
           Seu bairro
         </label>
-        <input
-          id="bairro-perfil"
-          value={bairro}
-          onChange={(e) => setBairro(e.target.value)}
-          placeholder="ex: Boa Vista"
-          maxLength={80}
-          className="mt-1.5 w-full rounded-2xl border border-grafite-300 px-4 py-3 text-sm text-grafite-900 focus:border-amarelo-500 focus:outline-none"
-        />
+        <CampoBairro id="bairro-perfil" value={bairro} onChange={setBairro} vazio="Prefiro não dizer" className="mt-1.5" />
 
         <label className="mt-4 block text-sm font-semibold text-grafite-900" htmlFor="bio">
           Sobre você

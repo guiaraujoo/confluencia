@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { CATEGORIAS, type Projeto, type VotosResultado } from '../../../types/database'
 import IconeCategoria from '../../feed/components/IconeCategoria'
 import { diasRestantes } from '../etapas'
-import { FOTOS_PROJETO } from '../fotos'
+import { fotoDoProjeto } from '../fotos'
 import BotaoSalvar from './BotaoSalvar'
 
 interface ConsultaDestaqueProps {
@@ -17,7 +17,7 @@ interface ConsultaDestaqueProps {
 // Card amarelo com a contagem regressiva do prazo em destaque.
 export default function ConsultaDestaque({ projeto, resultado, agora, indice }: ConsultaDestaqueProps) {
   const dias = diasRestantes(projeto, agora)
-  const foto = FOTOS_PROJETO[projeto.id]
+  const foto = fotoDoProjeto(projeto.id)
   const categoria = CATEGORIAS.find((c) => c.value === projeto.categoria)?.label ?? projeto.categoria
   const total = resultado?.total_votos ?? 0
   const pctFavor = total ? Math.round(((resultado?.votos_favor ?? 0) / total) * 100) : 0
