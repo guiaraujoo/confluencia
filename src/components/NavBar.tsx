@@ -88,11 +88,11 @@ function NavCentral() {
       label: 'Projetos',
       curto: 'Projetos',
       icone: ICONES.projetos,
-      ativo: (p) => p.startsWith('/projetos'),
+      ativo: (p) => p.startsWith('/projetos') && p !== '/projetos/novo',
     },
   ]
   if (ehGestor) {
-    itens.push({ to: '/painel', label: 'Painel de gestor', curto: 'Painel', icone: ICONES.painel, ativo: (p) => p === '/painel' })
+    itens.push({ to: '/painel', label: 'Painel de gestor', curto: 'Painel', icone: ICONES.painel, ativo: (p) => p === '/painel' || p === '/projetos/novo' })
   }
 
   return (
