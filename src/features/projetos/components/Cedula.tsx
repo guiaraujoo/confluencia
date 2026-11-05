@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { isSupabaseConfigured } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
+import { useEhGestor } from '../../../context/useEhGestor'
 import { buscarMeuComprovante, buscarResultado, votar as registrarVoto } from '../api'
 import type { Projeto, VotosResultado } from '../../../types/database'
 import { diasRestantes } from '../etapas'
@@ -26,6 +27,8 @@ export default function Cedula({ projeto, agora }: { projeto: Projeto; agora: nu
   const dias = diasRestantes(projeto, agora)
   // Projeto de exemplo com o banco ligado: não existe na tabela, então não dá para votar.
   const soExemplo = isSupabaseConfigured && ehExemplo(projeto.id)
+  // Órgão público acompanha o placar, mas não vota (regra também no banco, 0013).
+  const ehOrgao = useEhGestor() && Boolean(user)
   const userId = user?.id
 
   useEffect(() => {
@@ -100,9 +103,11 @@ export default function Cedula({ projeto, agora }: { projeto: Projeto; agora: nu
           animate={{ x: [0, 44] }}
           transition={{ duration: 3.5, ease: 'linear', repeat: Infinity }}
         />
-        <p className="relative text-[11px] font-bold uppercase tracking-[0.14em] text-amarelo-900">Cédula · consulta pública</p>
+        <p className="relative text-[11px] font-bold uppercase tracking-[0.14em] text-amarelo-900">
+          {ehOrgao ? 'Resultado ao vivo · consulta pública' : 'Cédula · consulta pública'}
+        </p>
         <p className="relative mt-1 font-heading text-2xl font-extrabold leading-tight text-grafite-900">
-          Você aprova este projeto?
+          {ehOrgao ? 'Como a população está votando' : 'Você aprova este projeto?'}
         </p>
         {dias !== null && (
           <p className="relative mt-1 text-sm font-semibold text-amarelo-900">
@@ -190,6 +195,15 @@ export default function Cedula({ projeto, agora }: { projeto: Projeto; agora: nu
                     Comprovante: {comprovante}
                   </span>
                 )}
+              </motion.p>
+            ) : ehOrgao ? (
+              <motion.p
+                key="orgao"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-grafite-100 p-4 text-sm text-grafite-700"
+              >
+                Contas de órgão público acompanham o resultado, mas não votam. A consulta é da população.
               </motion.p>
             ) : !user ? (
               <motion.div key="entrar" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
